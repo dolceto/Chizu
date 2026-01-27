@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import type { MapLevel, ModalType, TooltipPosition } from '@/types'
 
-// Korea center coordinates [longitude, latitude]
-const KOREA_CENTER: [number, number] = [127.7669, 35.9078]
+// ZoomableGroup default center (viewport offset, not geo coordinates)
+const DEFAULT_CENTER: [number, number] = [0, 0]
 
 interface MapState {
   // Current view
@@ -40,7 +40,7 @@ const initialState = {
   selectedSido: null,
   selectedSigungu: null,
   zoom: 1,
-  center: KOREA_CENTER,
+  center: DEFAULT_CENTER,
   hoveredRegion: null,
   tooltipPosition: null,
   isModalOpen: false,
@@ -89,7 +89,7 @@ export const useMapStore = create<MapState>((set) => ({
       selectedSido: sido,
       selectedSigungu: null,
       zoom: 1,
-      center: KOREA_CENTER,
+      center: DEFAULT_CENTER,
     }),
 
   drillUp: () =>
@@ -98,6 +98,6 @@ export const useMapStore = create<MapState>((set) => ({
       selectedSido: null,
       selectedSigungu: null,
       zoom: 1,
-      center: KOREA_CENTER,
+      center: DEFAULT_CENTER,
     }),
 }))

@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo, memo } from 'react'
+import { useRef, useCallback, useMemo, useEffect, memo } from 'react'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
 import styled from 'styled-components'
 import { useMapStore } from '@/stores'
@@ -14,21 +14,43 @@ interface RegionMapProps {
   onSigunguClick?: (name: string, code: string) => void
 }
 
+const HEADER_HEIGHT = '65px'
+
 const MapContainer = styled.div`
-  position: relative;
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
+  position: fixed;
+  top: ${HEADER_HEIGHT};
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - ${HEADER_HEIGHT});
+  touch-action: none;
+  pointer-events: auto;
+
+  svg {
+    touch-action: none;
+    width: 100vw !important;
+    height: calc(100vh - ${HEADER_HEIGHT}) !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
 `
 
 export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, onSigunguClick }: RegionMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    const svg = mapRef.current?.querySelector('svg')
+    if (svg) {
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid slice')
+    }
+  }, [])
+
   const {
     zoom,
+    center,
     hoveredRegion,
     tooltipPosition,
     setZoom,
+    setCenter,
     setHoveredRegion,
     setSelectedSigungu,
     openModal,
@@ -71,11 +93,12 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
     [setSelectedSigungu, openModal, onSigunguClick]
   )
 
-  const handleZoomEnd = useCallback(
-    (event: { zoom: number }) => {
-      setZoom(event.zoom)
+  const handleMoveEnd = useCallback(
+    (position: { coordinates: [number, number]; zoom: number }) => {
+      setZoom(position.zoom)
+      setCenter(position.coordinates)
     },
-    [setZoom]
+    [setZoom, setCenter]
   )
 
   return (
@@ -86,15 +109,20 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
           scale: config.scale,
           center: config.center,
         }}
-        width={400}
-        height={400}
-        style={{ width: '100%', height: 'auto' }}
+        width={5000}
+        height={5000}
+        style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%' }}
       >
         <ZoomableGroup
           zoom={zoom}
+          center={center}
           minZoom={0.5}
           maxZoom={4}
-          onMoveEnd={handleZoomEnd}
+          onMoveEnd={handleMoveEnd}
+          translateExtent={[
+            [-Infinity, -Infinity],
+            [Infinity, Infinity],
+          ]}
         >
           <Geographies geography={SIGUNGU_GEO_URL}>
             {({ geographies }) =>

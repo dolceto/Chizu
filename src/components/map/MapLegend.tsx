@@ -3,15 +3,15 @@ import { HEATMAP_COLORS } from '@/types'
 
 const LegendContainer = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 12px;
   background-color: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 0.5rem;
+  border-radius: 8px;
   font-size: 0.75rem;
   color: ${({ theme }) => theme.colors.text};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 `
 
 const LegendItem = styled.div`

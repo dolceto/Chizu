@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useCallback } from 'react'
+import { useEffect, useMemo, useCallback, useState } from 'react'
 import dynamic from 'next/dynamic'
 import styled from 'styled-components'
-import { RecordModal } from '@/components/ui'
+import { RecordModal, SideMenu, ToastContainer } from '@/components/ui'
+import { ChizuLogo } from '@/components/common'
 
 const MainMap = dynamic(() => import('@/components/map/MainMap').then((mod) => mod.MainMap), {
   ssr: false,
@@ -14,7 +15,8 @@ import { getAllRecords } from '@/db/records'
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
   background-color: ${({ theme }) => theme.colors.background};
 `
 
@@ -27,11 +29,44 @@ const Header = styled.header`
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 `
 
-const Logo = styled.h1`
-  font-size: 24px;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.text};
-  margin: 0;
+const LeftSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`
+
+const HamburgerButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.surface};
+  }
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
+  }
+
+  svg {
+    width: 24px;
+    height: 24px;
+    color: ${({ theme }) => theme.colors.text};
+  }
+`
+
+const LogoWrapper = styled.div`
+  display: flex;
+  align-items: center;
 `
 
 const HeaderActions = styled.div`
@@ -58,8 +93,13 @@ const Button = styled.button<{ $primary?: boolean }>`
 `
 
 const Main = styled.main`
+  position: relative;
   flex: 1;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  min-height: 0;
+  overflow: hidden;
 `
 
 const MapLoading = styled.div`
@@ -78,27 +118,41 @@ const MapLoading = styled.div`
 `
 
 const RecentSection = styled.section`
-  max-width: 900px;
-  margin: 24px auto 0;
-  padding: 0 16px;
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  max-width: 600px;
+  background: ${({ theme }) => theme.colors.background};
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
 `
 
 const SectionTitle = styled.h2`
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text};
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 `
 
 const RecentGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
 `
 
 const RecentCard = styled.div`
-  padding: 16px;
-  background: ${({ theme }) => theme.colors.background};
+  flex-shrink: 0;
+  width: 160px;
+  padding: 12px;
+  background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 8px;
   cursor: pointer;
@@ -150,6 +204,7 @@ function RecentRecordCard({ record, onClick }: RecentRecordCardProps) {
 }
 
 export default function Home() {
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState(false)
   const { isModalOpen, openModal } = useMapStore()
   const { records, setRecords } = useRecordStore()
 
@@ -194,7 +249,18 @@ export default function Home() {
   return (
     <Container>
       <Header>
-        <Logo>Chizu</Logo>
+        <LeftSection>
+          <HamburgerButton onClick={() => setIsSideMenuOpen(true)} aria-label="메뉴 열기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </HamburgerButton>
+          <LogoWrapper>
+            <ChizuLogo size={28} />
+          </LogoWrapper>
+        </LeftSection>
         <HeaderActions>
           <Button onClick={() => openModal('region')}>전체기록</Button>
           <Button $primary onClick={handleAddRecord}>
@@ -229,6 +295,8 @@ export default function Home() {
       </Main>
 
       {isModalOpen && <RecordModal />}
+      <SideMenu isOpen={isSideMenuOpen} onClose={() => setIsSideMenuOpen(false)} />
+      <ToastContainer />
     </Container>
   )
 }

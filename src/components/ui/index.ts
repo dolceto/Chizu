@@ -1,3 +1,6 @@
 export { RecordModal } from './RecordModal'
 export { RecordForm } from './RecordForm'
 export { RecordList } from './RecordList'
+export { SideMenu } from './SideMenu'
+export { ToastContainer } from './Toast'
+export { ConfirmModal } from './ConfirmModal'

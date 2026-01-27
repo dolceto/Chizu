@@ -1,0 +1,1 @@
+export { ChizuLogo } from './ChizuLogo'

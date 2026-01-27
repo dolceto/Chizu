@@ -21,23 +21,31 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
+  height: 100%;
   padding: 16px;
 `
 
 const MapWrapper = styled.div`
   position: relative;
+  flex: 1;
+  min-height: 0;
   animation: ${fadeIn} 0.3s ease-out;
 `
 
 const ControlsWrapper = styled.div`
   position: absolute;
   right: 16px;
-  top: 16px;
+  top: 60px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  z-index: 10;
+`
+
+const LegendWrapper = styled.div`
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
   z-index: 10;
 `
 
@@ -78,9 +86,11 @@ export function MainMap({
         <ControlsWrapper>
           <ZoomControls />
         </ControlsWrapper>
-      </MapWrapper>
 
-      <MapLegend />
+        <LegendWrapper>
+          <MapLegend />
+        </LegendWrapper>
+      </MapWrapper>
     </Container>
   )
 }

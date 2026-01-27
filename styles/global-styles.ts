@@ -12,6 +12,7 @@ export const GlobalStyle = createGlobalStyle`
 
   html {
     font-size: 16px;
+    height: 100%;
 
     ${({ theme }) => theme.media.tablet} {
       font-size: 15px;
@@ -29,6 +30,12 @@ export const GlobalStyle = createGlobalStyle`
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #__next {
+    height: 100%;
   }
 
   button {

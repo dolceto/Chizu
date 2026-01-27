@@ -23,47 +23,47 @@ interface RecordFormProps {
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing?.md ?? '16px'};
 `
 
 const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${({ theme }) => theme.spacing?.xs ?? '4px'};
 `
 
 const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.text};
+  color: ${({ theme }) => theme.colors?.text ?? '#111827'};
 `
 
 const Input = styled.input`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  padding: ${({ theme }) => theme.spacing?.sm ?? '8px'} ${({ theme }) => theme.spacing?.md ?? '16px'};
+  border: 1px solid ${({ theme }) => theme.colors?.border ?? '#E5E7EB'};
   border-radius: 6px;
   font-size: 1rem;
-  color: ${({ theme }) => theme.colors.text};
-  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors?.text ?? '#111827'};
+  background-color: ${({ theme }) => theme.colors?.background ?? '#FFFFFF'};
   transition: border-color 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
   }
 
   &::placeholder {
-    color: ${({ theme }) => theme.colors.secondary};
+    color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
   }
 `
 
 const TextArea = styled.textarea`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  padding: ${({ theme }) => theme.spacing?.sm ?? '8px'} ${({ theme }) => theme.spacing?.md ?? '16px'};
+  border: 1px solid ${({ theme }) => theme.colors?.border ?? '#E5E7EB'};
   border-radius: 6px;
   font-size: 1rem;
-  color: ${({ theme }) => theme.colors.text};
-  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors?.text ?? '#111827'};
+  background-color: ${({ theme }) => theme.colors?.background ?? '#FFFFFF'};
   resize: vertical;
   min-height: 100px;
   font-family: inherit;
@@ -71,50 +71,50 @@ const TextArea = styled.textarea`
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
   }
 
   &::placeholder {
-    color: ${({ theme }) => theme.colors.secondary};
+    color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
   }
 `
 
 const Select = styled.select`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  padding: ${({ theme }) => theme.spacing?.sm ?? '8px'} ${({ theme }) => theme.spacing?.md ?? '16px'};
+  border: 1px solid ${({ theme }) => theme.colors?.border ?? '#E5E7EB'};
   border-radius: 6px;
   font-size: 1rem;
-  color: ${({ theme }) => theme.colors.text};
-  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors?.text ?? '#111827'};
+  background-color: ${({ theme }) => theme.colors?.background ?? '#FFFFFF'};
   cursor: pointer;
   transition: border-color 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
   }
 `
 
 const LocationInfo = styled.div`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  background-color: ${({ theme }) => theme.colors.border};
+  padding: ${({ theme }) => theme.spacing?.sm ?? '8px'} ${({ theme }) => theme.spacing?.md ?? '16px'};
+  background-color: ${({ theme }) => theme.colors?.surface ?? '#F9FAFB'};
   border-radius: 6px;
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.secondary};
+  color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
 `
 
 const ButtonGroup = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-top: ${({ theme }) => theme.spacing.sm};
+  gap: ${({ theme }) => theme.spacing?.sm ?? '8px'};
+  margin-top: ${({ theme }) => theme.spacing?.sm ?? '8px'};
 `
 
 const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   flex: 1;
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing?.sm ?? '8px'} ${({ theme }) => theme.spacing?.md ?? '16px'};
   border: 1px solid
     ${({ theme, $variant }) =>
-      $variant === 'secondary' ? theme.colors.border : 'transparent'};
+      $variant === 'secondary' ? (theme.colors?.border ?? '#E5E7EB') : 'transparent'};
   border-radius: 6px;
   font-size: 1rem;
   font-weight: 500;
@@ -122,18 +122,18 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   transition: all 0.2s ease;
 
   background-color: ${({ theme, $variant }) =>
-    $variant === 'secondary' ? 'transparent' : theme.colors.primary};
+    $variant === 'secondary' ? 'transparent' : (theme.colors?.primary ?? '#3B82F6')};
   color: ${({ theme, $variant }) =>
-    $variant === 'secondary' ? theme.colors.text : 'white'};
+    $variant === 'secondary' ? (theme.colors?.text ?? '#111827') : 'white'};
 
   &:hover {
     opacity: ${({ $variant }) => ($variant === 'secondary' ? 1 : 0.9)};
     background-color: ${({ theme, $variant }) =>
-      $variant === 'secondary' ? theme.colors.border : theme.colors.primary};
+      $variant === 'secondary' ? (theme.colors?.border ?? '#E5E7EB') : (theme.colors?.primary ?? '#3B82F6')};
   }
 
   &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline: 2px solid ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
     outline-offset: 2px;
   }
 

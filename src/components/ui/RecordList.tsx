@@ -1,7 +1,8 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import styled from 'styled-components'
-import { useRecordStore } from '@/stores'
+import { useRecordStore, useToastStore } from '@/stores'
 import { deleteRecord } from '@/db/records'
+import { ConfirmModal } from './ConfirmModal'
 import type { Category, Record as VisitRecord } from '@/types'
 
 const CATEGORY_LABELS: { [key in Category]: string } = {
@@ -29,19 +30,19 @@ interface RecordListProps {
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing?.sm ?? '8px'};
+  margin-bottom: ${({ theme }) => theme.spacing?.md ?? '16px'};
 `
 
 const EmptyState = styled.div`
   text-align: center;
-  padding: ${({ theme }) => theme.spacing.xl};
-  color: ${({ theme }) => theme.colors.secondary};
+  padding: ${({ theme }) => theme.spacing?.xl ?? '32px'};
+  color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
 `
 
 const EmptyIcon = styled.div`
   font-size: 3rem;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme.spacing?.sm ?? '8px'};
 `
 
 const EmptyText = styled.p`
@@ -52,10 +53,10 @@ const EmptyText = styled.p`
 const RecordCard = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.md};
-  background-color: ${({ theme }) => theme.colors.background};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  gap: ${({ theme }) => theme.spacing?.xs ?? '4px'};
+  padding: ${({ theme }) => theme.spacing?.md ?? '16px'};
+  background-color: ${({ theme }) => theme.colors?.background ?? '#FFFFFF'};
+  border: 1px solid ${({ theme }) => theme.colors?.border ?? '#E5E7EB'};
   border-radius: 8px;
   transition: box-shadow 0.2s ease;
 
@@ -68,14 +69,14 @@ const CardHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${({ theme }) => theme.spacing?.sm ?? '8px'};
 `
 
 const CardTitle = styled.h3`
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: ${({ theme }) => theme.colors.text};
+  color: ${({ theme }) => theme.colors?.text ?? '#111827'};
   flex: 1;
   word-break: break-word;
 `
@@ -95,9 +96,9 @@ const CategoryBadge = styled.span<{ $color: string }>`
 const CardMeta = styled.div`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing?.md ?? '16px'};
   font-size: 0.8125rem;
-  color: ${({ theme }) => theme.colors.secondary};
+  color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
 `
 
 const MetaItem = styled.span`
@@ -109,7 +110,7 @@ const MetaItem = styled.span`
 const CardMemo = styled.p`
   margin: 0;
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.secondary};
+  color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -120,8 +121,8 @@ const CardMemo = styled.p`
 const CardActions = styled.div`
   display: flex;
   justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.xs};
-  margin-top: ${({ theme }) => theme.spacing.xs};
+  gap: ${({ theme }) => theme.spacing?.xs ?? '4px'};
+  margin-top: ${({ theme }) => theme.spacing?.xs ?? '4px'};
 `
 
 const ActionButton = styled.button<{ $variant?: 'danger' }>`
@@ -129,11 +130,11 @@ const ActionButton = styled.button<{ $variant?: 'danger' }>`
   background-color: transparent;
   border: 1px solid
     ${({ theme, $variant }) =>
-      $variant === 'danger' ? '#EF4444' : theme.colors.border};
+      $variant === 'danger' ? '#EF4444' : (theme.colors?.border ?? '#E5E7EB')};
   border-radius: 4px;
   font-size: 0.75rem;
   color: ${({ theme, $variant }) =>
-    $variant === 'danger' ? '#EF4444' : theme.colors.secondary};
+    $variant === 'danger' ? '#EF4444' : (theme.colors?.secondary ?? '#6B7280')};
   cursor: pointer;
   transition: all 0.2s ease;
 
@@ -141,21 +142,21 @@ const ActionButton = styled.button<{ $variant?: 'danger' }>`
     background-color: ${({ $variant }) =>
       $variant === 'danger' ? '#FEE2E2' : 'transparent'};
     border-color: ${({ theme, $variant }) =>
-      $variant === 'danger' ? '#EF4444' : theme.colors.text};
+      $variant === 'danger' ? '#EF4444' : (theme.colors?.text ?? '#111827')};
     color: ${({ theme, $variant }) =>
-      $variant === 'danger' ? '#DC2626' : theme.colors.text};
+      $variant === 'danger' ? '#DC2626' : (theme.colors?.text ?? '#111827')};
   }
 
   &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline: 2px solid ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
     outline-offset: 2px;
   }
 `
 
 const RecordCount = styled.div`
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.secondary};
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
+  margin-bottom: ${({ theme }) => theme.spacing?.sm ?? '8px'};
 `
 
 function formatDate(dateString: string): string {
@@ -169,26 +170,33 @@ function formatDate(dateString: string): string {
 
 export function RecordList({ sido, sigungu, onEditRecord }: RecordListProps) {
   const { getRecordsBySigungu, deleteRecord: deleteFromStore } = useRecordStore()
+  const addToast = useToastStore((state) => state.addToast)
+  const [deleteTarget, setDeleteTarget] = useState<VisitRecord | null>(null)
 
   const records = getRecordsBySigungu(sido, sigungu)
 
-  const handleDelete = useCallback(
-    async (record: VisitRecord) => {
-      const confirmed = window.confirm(
-        `"${record.title}" 기록을 삭제하시겠습니까?`
-      )
-      if (!confirmed) return
+  const handleDeleteClick = useCallback((record: VisitRecord) => {
+    setDeleteTarget(record)
+  }, [])
 
-      try {
-        await deleteRecord(record.id)
-        deleteFromStore(record.id)
-      } catch (error) {
-        console.error('Failed to delete record:', error)
-        alert('삭제에 실패했습니다. 다시 시도해주세요.')
-      }
-    },
-    [deleteFromStore]
-  )
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTarget) return
+
+    try {
+      await deleteRecord(deleteTarget.id)
+      deleteFromStore(deleteTarget.id)
+      addToast('기록이 삭제되었습니다', 'success')
+    } catch (error) {
+      console.error('Failed to delete record:', error)
+      addToast('삭제에 실패했습니다. 다시 시도해주세요.', 'error')
+    } finally {
+      setDeleteTarget(null)
+    }
+  }, [deleteTarget, deleteFromStore, addToast])
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteTarget(null)
+  }, [])
 
   if (records.length === 0) {
     return (
@@ -259,12 +267,23 @@ export function RecordList({ sido, sigungu, onEditRecord }: RecordListProps) {
 
           <CardActions>
             <ActionButton onClick={() => onEditRecord(record.id)}>수정</ActionButton>
-            <ActionButton $variant="danger" onClick={() => handleDelete(record)}>
+            <ActionButton $variant="danger" onClick={() => handleDeleteClick(record)}>
               삭제
             </ActionButton>
           </CardActions>
         </RecordCard>
       ))}
+
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        title="기록 삭제"
+        message={`"${deleteTarget?.title ?? ''}" 기록을 삭제하시겠습니까?`}
+        confirmText="삭제"
+        cancelText="취소"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </Container>
   )
 }

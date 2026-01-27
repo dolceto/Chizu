@@ -8,6 +8,7 @@ import { RecordList } from './RecordList'
 const Overlay = styled(Dialog.Overlay)`
   position: fixed;
   inset: 0;
+  z-index: 100;
   background-color: rgba(0, 0, 0, 0.5);
   animation: overlayShow 150ms ease;
 
@@ -26,14 +27,15 @@ const Content = styled(Dialog.Content)`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: ${({ theme }) => theme.colors.background};
+  z-index: 101;
+  background-color: ${({ theme }) => theme.colors?.background ?? '#FFFFFF'};
   border-radius: 8px;
   box-shadow: 0 10px 38px rgba(0, 0, 0, 0.35);
   width: 90vw;
   max-width: 500px;
   max-height: 85vh;
   overflow-y: auto;
-  padding: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing?.lg ?? '24px'};
   animation: contentShow 150ms ease;
 
   &:focus {
@@ -53,7 +55,7 @@ const Content = styled(Dialog.Content)`
 
   @media (max-width: 480px) {
     width: 95vw;
-    padding: ${({ theme }) => theme.spacing.md};
+    padding: ${({ theme }) => theme.spacing?.md ?? '16px'};
     max-height: 90vh;
   }
 `
@@ -62,14 +64,14 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing?.md ?? '16px'};
 `
 
 const Title = styled(Dialog.Title)`
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: ${({ theme }) => theme.colors.text};
+  color: ${({ theme }) => theme.colors?.text ?? '#111827'};
 `
 
 const CloseButton = styled(Dialog.Close)`
@@ -81,16 +83,16 @@ const CloseButton = styled(Dialog.Close)`
   border: none;
   border-radius: 50%;
   background-color: transparent;
-  color: ${({ theme }) => theme.colors.secondary};
+  color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
   cursor: pointer;
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.border};
+    background-color: ${({ theme }) => theme.colors?.border ?? '#E5E7EB'};
   }
 
   &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline: 2px solid ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
     outline-offset: 2px;
   }
 `
@@ -98,9 +100,9 @@ const CloseButton = styled(Dialog.Close)`
 const AddButton = styled.button`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  background-color: ${({ theme }) => theme.colors.primary};
+  gap: ${({ theme }) => theme.spacing?.xs ?? '4px'};
+  padding: ${({ theme }) => theme.spacing?.sm ?? '8px'} ${({ theme }) => theme.spacing?.md ?? '16px'};
+  background-color: ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
   color: white;
   border: none;
   border-radius: 6px;
@@ -114,7 +116,7 @@ const AddButton = styled.button`
   }
 
   &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline: 2px solid ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
     outline-offset: 2px;
   }
 `
