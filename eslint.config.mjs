@@ -14,6 +14,9 @@ export default tseslint.config(
       '*.config.mjs',
       '.prettierrc.js',
       'commitlint.config.js',
+      'scripts/',
+      'test-*.js',
+      'test-*.mjs',
     ],
   },
   {

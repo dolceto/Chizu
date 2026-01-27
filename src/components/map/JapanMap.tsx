@@ -26,6 +26,8 @@ const MapContainer = styled.div`
   height: calc(100vh - ${HEADER_HEIGHT});
   touch-action: none;
   pointer-events: auto;
+  z-index: 1;
+  background-color: ${({ theme }) => theme.colors?.background ?? '#ffffff'};
 
   svg {
     touch-action: none;
@@ -65,8 +67,6 @@ export const JapanMap = memo(function JapanMap({
     setZoom,
     setCenter,
     setHoveredRegion,
-    openModal,
-    setSelectedSigungu,
   } = useMapStore()
 
   const selectedMobileRegionRef = useRef<string | null>(null)
@@ -98,14 +98,15 @@ export const JapanMap = memo(function JapanMap({
     [setHoveredRegion, isMobile]
   )
 
+  const { drillDown } = useMapStore()
+
   const handleClick = useCallback(
     (name: string, code: string) => {
-      // 일본은 도도부현 레벨에서 바로 모달 열기 (시구정촌 데이터 없음)
-      setSelectedSigungu(name)
-      openModal('region')
+      // 도도부현 클릭 시 시구정촌 레벨로 드릴다운
+      drillDown(name)
       onPrefectureClick?.(name, code)
     },
-    [setSelectedSigungu, openModal, onPrefectureClick]
+    [drillDown, onPrefectureClick]
   )
 
   const handleMobileTap = useCallback(
@@ -115,11 +116,10 @@ export const JapanMap = memo(function JapanMap({
       const bounds = mapRef.current?.getBoundingClientRect()
 
       if (selectedMobileRegionRef.current === name) {
-        // 두 번째 탭 - 모달 열기
+        // 두 번째 탭 - 드릴다운
         setHoveredRegion(null)
         selectedMobileRegionRef.current = null
-        setSelectedSigungu(name)
-        openModal('region')
+        drillDown(name)
         onPrefectureClick?.(name, code)
       } else {
         // 첫 번째 탭 - 호버 상태 표시
@@ -132,7 +132,7 @@ export const JapanMap = memo(function JapanMap({
         }
       }
     },
-    [isMobile, setSelectedSigungu, openModal, onPrefectureClick, setHoveredRegion]
+    [isMobile, drillDown, onPrefectureClick, setHoveredRegion]
   )
 
   const handleMoveEnd = useCallback(

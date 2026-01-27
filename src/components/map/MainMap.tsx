@@ -3,6 +3,7 @@ import { useMapStore } from '@/stores'
 import { KoreaMap } from './KoreaMap'
 import { RegionMap } from './RegionMap'
 import { JapanMap } from './JapanMap'
+import { JapanRegionMap } from './JapanRegionMap'
 import { MapNavigation } from './MapNavigation'
 import { MapLegend } from './MapLegend'
 import { ZoomControls } from './ZoomControls'
@@ -69,8 +70,20 @@ export function MainMap({
 
   const renderMap = () => {
     if (selectedCountry === 'japan') {
-      // 일본: 도도부현 레벨만 지원 (시구정촌 데이터 없음)
-      return <JapanMap recordCounts={sidoRecordCounts} onPrefectureClick={onSidoClick} />
+      // 일본
+      if (isCountryLevel) {
+        return <JapanMap recordCounts={sidoRecordCounts} onPrefectureClick={onSidoClick} />
+      }
+      // 시구정촌 레벨
+      return (
+        selectedSido && (
+          <JapanRegionMap
+            prefectureName={selectedSido}
+            recordCounts={sigunguRecordCounts}
+            onMunicipalityClick={onSigunguClick}
+          />
+        )
+      )
     }
 
     // 한국
@@ -91,10 +104,12 @@ export function MainMap({
 
   const mapKey =
     selectedCountry === 'japan'
-      ? `japan-${selectedCountry}`
+      ? isCountryLevel
+        ? 'japan-country'
+        : `japan-${selectedSido}`
       : isCountryLevel
-        ? 'country'
-        : selectedSido
+        ? 'korea-country'
+        : `korea-${selectedSido}`
 
   return (
     <Container>

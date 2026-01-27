@@ -12,7 +12,7 @@ const Overlay = styled(Dialog.Overlay)`
   right: 0;
   bottom: 0;
   z-index: 100;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.3);
   animation: overlayShow 150ms ease;
 
   @keyframes overlayShow {
@@ -197,10 +197,9 @@ export function RecordModal() {
     [openModal]
   )
 
-  // 일본의 경우: 도도부현이 selectedSigungu에 저장됨 (드릴다운 없음)
-  // 한국의 경우: 시군구가 selectedSigungu에 저장됨
-  const currentSido = selectedCountry === 'japan' ? selectedSigungu ?? '' : selectedSido ?? ''
-  const currentSigungu = selectedCountry === 'japan' ? '' : selectedSigungu ?? ''
+  // 일본/한국 모두: 도도부현/시도가 selectedSido, 시구정촌/시군구가 selectedSigungu
+  const currentSido = selectedSido ?? ''
+  const currentSigungu = selectedSigungu ?? ''
 
   const renderContent = () => {
     switch (modalType) {

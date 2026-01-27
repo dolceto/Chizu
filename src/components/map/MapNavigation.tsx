@@ -1,7 +1,8 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import { useMapStore } from '@/stores'
 import type { Country } from '@/types'
+import { getPrefectureNameKo } from './prefectureNames'
 
 const NavContainer = styled.div`
   position: absolute;
@@ -96,7 +97,7 @@ interface MapNavigationProps {
 
 const COUNTRY_NAMES = {
   korea: '대한민국',
-  japan: '日本',
+  japan: '일본',
 } as const
 
 export function MapNavigation({ showBackButton = true }: MapNavigationProps) {
@@ -104,8 +105,17 @@ export function MapNavigation({ showBackButton = true }: MapNavigationProps) {
 
   const isCountryLevel = currentLevel === 'country'
 
-  // 일본은 드릴다운이 없으므로 뒤로 버튼 숨김
-  const showBack = showBackButton && !isCountryLevel && selectedCountry === 'korea'
+  // 시구정촌 레벨일 때 뒤로 버튼 표시 (한국, 일본 모두)
+  const showBack = showBackButton && !isCountryLevel
+
+  // 일본 도도부현명을 한글로 변환
+  const displaySido = useMemo(() => {
+    if (!selectedSido) return null
+    if (selectedCountry === 'japan') {
+      return getPrefectureNameKo(selectedSido)
+    }
+    return selectedSido
+  }, [selectedSido, selectedCountry])
 
   const handleCountryChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -130,10 +140,10 @@ export function MapNavigation({ showBackButton = true }: MapNavigationProps) {
         <option value="japan">{COUNTRY_NAMES.japan}</option>
       </CountrySelect>
 
-      {selectedSido && selectedCountry === 'korea' && (
+      {displaySido && (
         <Breadcrumb>
           <Separator>/</Separator>
-          <BreadcrumbItem $isActive={!isCountryLevel}>{selectedSido}</BreadcrumbItem>
+          <BreadcrumbItem $isActive={!isCountryLevel}>{displaySido}</BreadcrumbItem>
         </Breadcrumb>
       )}
     </NavContainer>
