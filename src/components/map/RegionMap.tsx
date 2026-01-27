@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo, useEffect, memo } from 'react'
+import { useRef, useCallback, useMemo, useEffect, useState, memo } from 'react'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
 import styled from 'styled-components'
 import { useMapStore } from '@/stores'
@@ -36,12 +36,20 @@ const MapContainer = styled.div`
 
 export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, onSigunguClick }: RegionMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     const svg = mapRef.current?.querySelector('svg')
     if (svg) {
       svg.setAttribute('preserveAspectRatio', 'xMidYMid slice')
     }
+  }, [])
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile('ontouchstart' in window || navigator.maxTouchPoints > 0)
+    }
+    checkMobile()
   }, [])
 
   const {
@@ -60,19 +68,24 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
     return SIDO_CONFIG[sidoName] ?? SIDO_CONFIG['서울특별시']
   }, [sidoName])
 
+  const selectedMobileRegionRef = useRef<string | null>(null)
+
   const handleMouseEnter = useCallback(
     (name: string) => {
+      if (isMobile) return
       setHoveredRegion(name)
     },
-    [setHoveredRegion]
+    [setHoveredRegion, isMobile]
   )
 
   const handleMouseLeave = useCallback(() => {
+    if (isMobile) return
     setHoveredRegion(null)
-  }, [setHoveredRegion])
+  }, [setHoveredRegion, isMobile])
 
   const handleMouseMove = useCallback(
     (event: React.MouseEvent, name: string) => {
+      if (isMobile) return
       const bounds = mapRef.current?.getBoundingClientRect()
       if (bounds) {
         setHoveredRegion(name, {
@@ -81,8 +94,9 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
         })
       }
     },
-    [setHoveredRegion]
+    [setHoveredRegion, isMobile]
   )
+
 
   const handleClick = useCallback(
     (name: string, code: string) => {
@@ -91,6 +105,33 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
       onSigunguClick?.(name, code)
     },
     [setSelectedSigungu, openModal, onSigunguClick]
+  )
+
+  const handleMobileTap = useCallback(
+    (event: React.PointerEvent, name: string, code: string) => {
+      if (!isMobile || event.pointerType !== 'touch') return
+
+      const bounds = mapRef.current?.getBoundingClientRect()
+
+      if (selectedMobileRegionRef.current === name) {
+        // 두 번째 탭 - 모달 열기
+        setHoveredRegion(null)
+        selectedMobileRegionRef.current = null
+        setSelectedSigungu(name)
+        openModal('region')
+        onSigunguClick?.(name, code)
+      } else {
+        // 첫 번째 탭 - 호버 상태 표시
+        selectedMobileRegionRef.current = name
+        if (bounds) {
+          setHoveredRegion(name, {
+            x: event.clientX - bounds.left,
+            y: event.clientY - bounds.top,
+          })
+        }
+      }
+    },
+    [isMobile, setSelectedSigungu, openModal, onSigunguClick, setHoveredRegion]
   )
 
   const handleMoveEnd = useCallback(
@@ -141,15 +182,16 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
                     <Geography
                       key={geo.rsmKey}
                       geography={geo}
-                      onClick={() => handleClick(name, code)}
+                      onClick={() => !isMobile && handleClick(name, code)}
                       onMouseEnter={() => handleMouseEnter(name)}
                       onMouseLeave={handleMouseLeave}
                       onMouseMove={(e) => handleMouseMove(e, name)}
+                      onPointerUp={(e) => handleMobileTap(e as unknown as React.PointerEvent, name, code)}
                       style={{
                         default: {
-                          fill: getHeatmapColor(count),
-                          stroke: '#9CA3AF',
-                          strokeWidth: 0.5,
+                          fill: isHovered ? '#60A5FA' : getHeatmapColor(count),
+                          stroke: isHovered ? '#6B7280' : '#9CA3AF',
+                          strokeWidth: isHovered ? 1 : 0.5,
                           outline: 'none',
                           transition: 'all 0.2s ease',
                           cursor: 'pointer',
@@ -159,7 +201,7 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
                           stroke: '#6B7280',
                           strokeWidth: 1,
                           outline: 'none',
-                          filter: 'drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.3))',
+                          filter: isMobile ? 'none' : 'drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.3))',
                           cursor: 'pointer',
                         },
                         pressed: {

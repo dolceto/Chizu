@@ -22,12 +22,18 @@ const Overlay = styled(Dialog.Overlay)`
   }
 `
 
-const Content = styled(Dialog.Content)`
+const ContentWrapper = styled.div`
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
   z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+`
+
+const Content = styled(Dialog.Content)`
+  pointer-events: auto;
   background-color: ${({ theme }) => theme.colors?.background ?? '#FFFFFF'};
   border-radius: 8px;
   box-shadow: 0 10px 38px rgba(0, 0, 0, 0.35);
@@ -45,18 +51,18 @@ const Content = styled(Dialog.Content)`
   @keyframes contentShow {
     from {
       opacity: 0;
-      transform: translate(-50%, -48%) scale(0.96);
+      transform: scale(0.96);
     }
     to {
       opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
+      transform: scale(1);
     }
   }
 
   @media (max-width: 480px) {
     width: 95vw;
     padding: ${({ theme }) => theme.spacing?.md ?? '16px'};
-    max-height: 90vh;
+    max-height: 80vh;
   }
 `
 
@@ -222,29 +228,31 @@ export function RecordModal() {
     <Dialog.Root open={isModalOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Overlay />
-        <Content>
-          <Header>
-            <Title>{getModalTitle(modalType, selectedSigungu, isEditing)}</Title>
-            <CloseButton aria-label="닫기">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 4L4 12M4 4L12 12"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </CloseButton>
-          </Header>
-          {renderContent()}
-        </Content>
+        <ContentWrapper>
+          <Content>
+            <Header>
+              <Title>{getModalTitle(modalType, selectedSigungu, isEditing)}</Title>
+              <CloseButton aria-label="닫기">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 4L4 12M4 4L12 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </CloseButton>
+            </Header>
+            {renderContent()}
+          </Content>
+        </ContentWrapper>
       </Dialog.Portal>
     </Dialog.Root>
   )

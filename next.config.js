@@ -8,6 +8,8 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   productionBrowserSourceMaps: false,
+  // 로컬 네트워크에서 개발 서버 접근 허용
+  allowedDevOrigins: ['192.168.*.*', 'localhost'],
 };
 
 module.exports = nextConfig;
