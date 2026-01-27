@@ -24,6 +24,8 @@ const MapContainer = styled.div`
   height: calc(100vh - ${HEADER_HEIGHT});
   touch-action: none;
   pointer-events: auto;
+  z-index: 1;
+  background-color: ${({ theme }) => theme.colors?.background ?? '#ffffff'};
 
   svg {
     touch-action: none;
@@ -41,7 +43,7 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
   useEffect(() => {
     const svg = mapRef.current?.querySelector('svg')
     if (svg) {
-      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid slice')
     }
   }, [])
 
@@ -147,7 +149,7 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
-          scale: config.scale,
+          scale: config.scale * 1,
           center: config.center,
         }}
         width={5000}

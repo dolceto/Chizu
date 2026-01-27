@@ -70,7 +70,7 @@ export const useMapStore = create<MapState>((set) => ({
 
   setSelectedSigungu: (sigungu) => set({ selectedSigungu: sigungu }),
 
-  setZoom: (zoom) => set({ zoom: Math.max(0.5, Math.min(4, zoom)) }),
+  setZoom: (zoom) => set({ zoom: Math.max(0.5, Math.min(8, zoom)) }),
 
   setCenter: (center) => set({ center }),
 
@@ -101,7 +101,7 @@ export const useMapStore = create<MapState>((set) => ({
       currentLevel: 'sido',
       selectedSido: sido,
       selectedSigungu: null,
-      zoom: 1.5,
+      zoom: 1,
       center: DEFAULT_CENTER,
     }),
 

@@ -4,6 +4,8 @@ interface SidoConfig {
   scale: number
 }
 
+// scale 값은 지역 크기에 따라 조정됨
+// 작은 지역(광역시)은 높은 scale, 큰 지역(도)은 낮은 scale
 export const SIDO_CONFIG: Record<string, SidoConfig> = {
   '서울특별시': {
     codePrefix: '11',
@@ -50,7 +52,7 @@ export const SIDO_CONFIG: Record<string, SidoConfig> = {
     center: [127.2, 37.4],
     scale: 60000,
   },
-  '강원특별자치도': {
+  '강원도': {
     codePrefix: '32',
     center: [128.2, 37.7],
     scale: 40000,
@@ -65,7 +67,7 @@ export const SIDO_CONFIG: Record<string, SidoConfig> = {
     center: [126.8, 36.5],
     scale: 50000,
   },
-  '전북특별자치도': {
+  '전라북도': {
     codePrefix: '35',
     center: [127.1, 35.7],
     scale: 50000,

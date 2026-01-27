@@ -8,7 +8,7 @@ import { MapTooltip } from './MapTooltip'
 const SIDO_GEO_URL = '/data/geojson/korea/sido.json'
 
 const KOREA_CENTER: [number, number] = [127.7669, 35.9078]
-const KOREA_SCALE = 30000
+const KOREA_SCALE = 20000
 
 interface KoreaMapProps {
   recordCounts?: Record<string, number>
@@ -25,6 +25,8 @@ const MapContainer = styled.div`
   height: calc(100vh - ${HEADER_HEIGHT});
   touch-action: none;
   pointer-events: auto;
+  z-index: 1;
+  background-color: ${({ theme }) => theme.colors?.background ?? '#ffffff'};
 
   svg {
     touch-action: none;
@@ -42,7 +44,7 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
   useEffect(() => {
     const svg = mapRef.current?.querySelector('svg')
     if (svg) {
-      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid slice')
     }
   }, [])
 
