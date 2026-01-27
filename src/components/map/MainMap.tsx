@@ -2,6 +2,7 @@ import styled, { keyframes } from 'styled-components'
 import { useMapStore } from '@/stores'
 import { KoreaMap } from './KoreaMap'
 import { RegionMap } from './RegionMap'
+import { JapanMap } from './JapanMap'
 import { MapNavigation } from './MapNavigation'
 import { MapLegend } from './MapLegend'
 import { ZoomControls } from './ZoomControls'
@@ -62,26 +63,45 @@ export function MainMap({
   onSidoClick,
   onSigunguClick,
 }: MainMapProps) {
-  const { currentLevel, selectedSido } = useMapStore()
+  const { selectedCountry, currentLevel, selectedSido } = useMapStore()
 
   const isCountryLevel = currentLevel === 'country'
+
+  const renderMap = () => {
+    if (selectedCountry === 'japan') {
+      // 일본: 도도부현 레벨만 지원 (시구정촌 데이터 없음)
+      return <JapanMap recordCounts={sidoRecordCounts} onPrefectureClick={onSidoClick} />
+    }
+
+    // 한국
+    if (isCountryLevel) {
+      return <KoreaMap recordCounts={sidoRecordCounts} onSidoClick={onSidoClick} />
+    }
+
+    return (
+      selectedSido && (
+        <RegionMap
+          sidoName={selectedSido}
+          recordCounts={sigunguRecordCounts}
+          onSigunguClick={onSigunguClick}
+        />
+      )
+    )
+  }
+
+  const mapKey =
+    selectedCountry === 'japan'
+      ? `japan-${selectedCountry}`
+      : isCountryLevel
+        ? 'country'
+        : selectedSido
 
   return (
     <Container>
       <MapNavigation />
 
-      <MapWrapper key={isCountryLevel ? 'country' : selectedSido}>
-        {isCountryLevel ? (
-          <KoreaMap recordCounts={sidoRecordCounts} onSidoClick={onSidoClick} />
-        ) : (
-          selectedSido && (
-            <RegionMap
-              sidoName={selectedSido}
-              recordCounts={sigunguRecordCounts}
-              onSigunguClick={onSigunguClick}
-            />
-          )
-        )}
+      <MapWrapper key={mapKey}>
+        {renderMap()}
 
         <ControlsWrapper>
           <ZoomControls />

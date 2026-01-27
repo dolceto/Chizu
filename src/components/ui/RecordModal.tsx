@@ -7,7 +7,10 @@ import { RecordList } from './RecordList'
 
 const Overlay = styled(Dialog.Overlay)`
   position: fixed;
-  inset: 0;
+  top: 65px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 100;
   background-color: rgba(0, 0, 0, 0.5);
   animation: overlayShow 150ms ease;
@@ -22,9 +25,14 @@ const Overlay = styled(Dialog.Overlay)`
   }
 `
 
+const HEADER_HEIGHT = 65
+
 const ContentWrapper = styled.div`
   position: fixed;
-  inset: 0;
+  top: ${HEADER_HEIGHT}px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 101;
   display: flex;
   align-items: center;
@@ -149,6 +157,7 @@ export function RecordModal() {
     isModalOpen,
     modalType,
     modalRecordId,
+    selectedCountry,
     selectedSido,
     selectedSigungu,
     closeModal,
@@ -188,14 +197,20 @@ export function RecordModal() {
     [openModal]
   )
 
+  // 일본의 경우: 도도부현이 selectedSigungu에 저장됨 (드릴다운 없음)
+  // 한국의 경우: 시군구가 selectedSigungu에 저장됨
+  const currentSido = selectedCountry === 'japan' ? selectedSigungu ?? '' : selectedSido ?? ''
+  const currentSigungu = selectedCountry === 'japan' ? '' : selectedSigungu ?? ''
+
   const renderContent = () => {
     switch (modalType) {
       case 'region':
         return (
           <>
             <RecordList
-              sido={selectedSido ?? ''}
-              sigungu={selectedSigungu ?? ''}
+              sido={currentSido}
+              sigungu={currentSigungu}
+              country={selectedCountry}
               onEditRecord={handleEditRecord}
             />
             <AddButton onClick={handleAddClick}>+ 기록 추가</AddButton>
@@ -204,8 +219,8 @@ export function RecordModal() {
       case 'form':
         return (
           <RecordForm
-            sido={selectedSido ?? ''}
-            sigungu={selectedSigungu ?? ''}
+            sido={currentSido}
+            sigungu={currentSigungu}
             recordId={modalRecordId ?? undefined}
             onSuccess={handleFormSuccess}
             onCancel={() => (selectedSigungu ? openModal('region') : closeModal())}
@@ -216,6 +231,7 @@ export function RecordModal() {
           <RecordList
             sido={selectedRecord.sido}
             sigungu={selectedRecord.sigungu}
+            country={selectedRecord.country}
             onEditRecord={handleEditRecord}
           />
         ) : null

@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { useRecordStore, useToastStore } from '@/stores'
 import { deleteRecord } from '@/db/records'
 import { ConfirmModal } from './ConfirmModal'
-import type { Category, Record as VisitRecord } from '@/types'
+import type { Category, Country, Record as VisitRecord } from '@/types'
 
 const CATEGORY_LABELS: { [key in Category]: string } = {
   cafe: '카페',
@@ -24,6 +24,7 @@ const CATEGORY_COLORS: { [key in Category]: string } = {
 interface RecordListProps {
   sido: string
   sigungu: string
+  country?: Country
   onEditRecord: (recordId: string) => void
 }
 
@@ -168,12 +169,16 @@ function formatDate(dateString: string): string {
   })
 }
 
-export function RecordList({ sido, sigungu, onEditRecord }: RecordListProps) {
-  const { getRecordsBySigungu, deleteRecord: deleteFromStore } = useRecordStore()
+export function RecordList({ sido, sigungu, country, onEditRecord }: RecordListProps) {
+  const { getRecordsBySigungu, getRecordsBySido, deleteRecord: deleteFromStore } = useRecordStore()
   const addToast = useToastStore((state) => state.addToast)
   const [deleteTarget, setDeleteTarget] = useState<VisitRecord | null>(null)
 
-  const records = getRecordsBySigungu(sido, sigungu)
+  // 일본은 시군구가 없으므로 도도부현으로 조회
+  const records =
+    country === 'japan' && !sigungu
+      ? getRecordsBySido(sido, country)
+      : getRecordsBySigungu(sido, sigungu, country)
 
   const handleDeleteClick = useCallback((record: VisitRecord) => {
     setDeleteTarget(record)

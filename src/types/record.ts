@@ -1,5 +1,7 @@
 export type Category = 'cafe' | 'restaurant' | 'travel' | 'culture' | 'etc'
 
+export type Country = 'korea' | 'japan'
+
 export interface Coordinates {
   lat: number
   lng: number
@@ -15,8 +17,9 @@ export interface Record {
   id: string
 
   // Location
-  sido: string
-  sigungu: string
+  country: Country
+  sido: string // 한국: 시/도, 일본: 도도부현
+  sigungu: string // 한국: 시군구, 일본: 시구정촌
   address?: string
   coordinates?: Coordinates
 
@@ -33,6 +36,7 @@ export interface Record {
 }
 
 export interface RecordInput {
+  country: Country
   sido: string
   sigungu: string
   address?: string

@@ -1,7 +1,8 @@
 import { useCallback, useEffect } from 'react'
 import styled from 'styled-components'
 import * as Dialog from '@radix-ui/react-dialog'
-import { useToastStore } from '@/stores'
+import { useToastStore, useMapStore } from '@/stores'
+import type { Country } from '@/types'
 
 interface SideMenuProps {
   isOpen: boolean
@@ -97,7 +98,16 @@ const MenuList = styled.nav`
   overflow-y: auto;
 `
 
-const MenuItem = styled.button`
+const SectionTitle = styled.div`
+  padding: ${({ theme }) => theme.spacing?.sm ?? '8px'} ${({ theme }) => theme.spacing?.md ?? '16px'};
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
+`
+
+const MenuItem = styled.button<{ $isActive?: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing?.sm ?? '8px'};
@@ -105,15 +115,21 @@ const MenuItem = styled.button`
   padding: ${({ theme }) => theme.spacing?.md ?? '16px'};
   border: none;
   border-radius: 8px;
-  background-color: transparent;
-  color: ${({ theme }) => theme.colors?.text ?? '#111827'};
+  background-color: ${({ $isActive, theme }) =>
+    $isActive ? (theme.colors?.primary ? theme.colors.primary + '15' : 'rgba(59, 130, 246, 0.15)') : 'transparent'};
+  color: ${({ $isActive, theme }) =>
+    $isActive ? theme.colors?.primary ?? '#3B82F6' : theme.colors?.text ?? '#111827'};
   font-size: 0.9375rem;
+  font-weight: ${({ $isActive }) => ($isActive ? 600 : 400)};
   text-align: left;
   cursor: pointer;
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors?.surface ?? '#F9FAFB'};
+    background-color: ${({ $isActive, theme }) =>
+      $isActive
+        ? (theme.colors?.primary ? theme.colors.primary + '20' : 'rgba(59, 130, 246, 0.2)')
+        : theme.colors?.surface ?? '#F9FAFB'};
   }
 
   &:focus {
@@ -124,8 +140,14 @@ const MenuItem = styled.button`
   svg {
     width: 20px;
     height: 20px;
-    color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
+    color: ${({ $isActive, theme }) =>
+      $isActive ? theme.colors?.primary ?? '#3B82F6' : theme.colors?.secondary ?? '#6B7280'};
   }
+`
+
+const CountryFlag = styled.span`
+  font-size: 1.25rem;
+  line-height: 1;
 `
 
 const Divider = styled.div`
@@ -144,6 +166,15 @@ const Footer = styled.div`
 
 export function SideMenu({ isOpen, onClose }: SideMenuProps) {
   const addToast = useToastStore((state) => state.addToast)
+  const { selectedCountry, setCountry } = useMapStore()
+
+  const handleCountryChange = useCallback(
+    (country: Country) => {
+      setCountry(country)
+      onClose()
+    },
+    [setCountry, onClose]
+  )
 
   const handleMenuClick = useCallback(() => {
     addToast('준비 중입니다', 'info')
@@ -196,6 +227,26 @@ export function SideMenu({ isOpen, onClose }: SideMenuProps) {
           </Header>
 
           <MenuList>
+            <SectionTitle>국가 선택</SectionTitle>
+
+            <MenuItem
+              $isActive={selectedCountry === 'korea'}
+              onClick={() => handleCountryChange('korea')}
+            >
+              <CountryFlag>🇰🇷</CountryFlag>
+              한국
+            </MenuItem>
+
+            <MenuItem
+              $isActive={selectedCountry === 'japan'}
+              onClick={() => handleCountryChange('japan')}
+            >
+              <CountryFlag>🇯🇵</CountryFlag>
+              일본
+            </MenuItem>
+
+            <Divider />
+
             <MenuItem onClick={handleMenuClick}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />

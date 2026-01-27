@@ -1,11 +1,12 @@
 import { create } from 'zustand'
-import type { MapLevel, ModalType, TooltipPosition } from '@/types'
+import type { MapLevel, ModalType, TooltipPosition, Country } from '@/types'
 
 // ZoomableGroup default center (viewport offset, not geo coordinates)
 const DEFAULT_CENTER: [number, number] = [0, 0]
 
 interface MapState {
   // Current view
+  selectedCountry: Country
   currentLevel: MapLevel
   selectedSido: string | null
   selectedSigungu: string | null
@@ -22,6 +23,7 @@ interface MapState {
   modalRecordId: string | null
 
   // Actions
+  setCountry: (country: Country) => void
   setCurrentLevel: (level: MapLevel) => void
   setSelectedSido: (sido: string | null) => void
   setSelectedSigungu: (sigungu: string | null) => void
@@ -36,6 +38,7 @@ interface MapState {
 }
 
 const initialState = {
+  selectedCountry: 'korea' as Country,
   currentLevel: 'country' as MapLevel,
   selectedSido: null,
   selectedSigungu: null,
@@ -50,6 +53,16 @@ const initialState = {
 
 export const useMapStore = create<MapState>((set) => ({
   ...initialState,
+
+  setCountry: (country) =>
+    set({
+      selectedCountry: country,
+      currentLevel: 'country',
+      selectedSido: null,
+      selectedSigungu: null,
+      zoom: 1,
+      center: DEFAULT_CENTER,
+    }),
 
   setCurrentLevel: (level) => set({ currentLevel: level }),
 
@@ -88,7 +101,7 @@ export const useMapStore = create<MapState>((set) => ({
       currentLevel: 'sido',
       selectedSido: sido,
       selectedSigungu: null,
-      zoom: 1,
+      zoom: 1.5,
       center: DEFAULT_CENTER,
     }),
 

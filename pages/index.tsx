@@ -193,20 +193,31 @@ interface RecentRecordCardProps {
   onClick: () => void
 }
 
+const COUNTRY_FLAGS = {
+  korea: '🇰🇷',
+  japan: '🇯🇵',
+} as const
+
 function RecentRecordCard({ record, onClick }: RecentRecordCardProps) {
+  const location = record.sigungu
+    ? `${record.sido} ${record.sigungu}`
+    : record.sido
+
   return (
     <RecentCard onClick={onClick}>
       <RecentDate>{formatDate(record.visitedAt)}</RecentDate>
       <RecentTitle>{record.title}</RecentTitle>
-      <RecentLocation>{record.sido} {record.sigungu}</RecentLocation>
+      <RecentLocation>
+        {COUNTRY_FLAGS[record.country ?? 'korea']} {location}
+      </RecentLocation>
     </RecentCard>
   )
 }
 
 export default function Home() {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false)
-  const { isModalOpen, openModal } = useMapStore()
-  const { records, setRecords } = useRecordStore()
+  const { isModalOpen, openModal, selectedCountry } = useMapStore()
+  const { setRecords, getRecordsByCountry } = useRecordStore()
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -220,27 +231,32 @@ export default function Home() {
     fetchRecords()
   }, [setRecords])
 
+  // 현재 국가의 레코드만 필터링
+  const countryRecords = useMemo(() => {
+    return getRecordsByCountry(selectedCountry)
+  }, [getRecordsByCountry, selectedCountry])
+
   const sidoRecordCounts = useMemo(() => {
     const counts: Record<string, number> = {}
-    records.forEach((record) => {
+    countryRecords.forEach((record) => {
       counts[record.sido] = (counts[record.sido] ?? 0) + 1
     })
     return counts
-  }, [records])
+  }, [countryRecords])
 
   const sigunguRecordCounts = useMemo(() => {
     const counts: Record<string, number> = {}
-    records.forEach((record) => {
+    countryRecords.forEach((record) => {
       counts[record.sigungu] = (counts[record.sigungu] ?? 0) + 1
     })
     return counts
-  }, [records])
+  }, [countryRecords])
 
   const recentRecords = useMemo(() => {
-    return [...records]
+    return [...countryRecords]
       .sort((a, b) => new Date(b.visitedAt).getTime() - new Date(a.visitedAt).getTime())
       .slice(0, 5)
-  }, [records])
+  }, [countryRecords])
 
   const handleAddRecord = useCallback(() => {
     openModal('form')

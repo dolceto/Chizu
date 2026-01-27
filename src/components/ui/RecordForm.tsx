@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import styled from 'styled-components'
-import { useRecordStore } from '@/stores'
+import { useRecordStore, useMapStore } from '@/stores'
 import { createRecord, updateRecord, getRecordById } from '@/db/records'
-import type { Category, RecordInput } from '@/types'
+import type { Category, RecordInput, Country } from '@/types'
 
 const CATEGORIES: { value: Category; label: string }[] = [
   { value: 'cafe', label: '카페' },
@@ -96,11 +96,18 @@ const Select = styled.select`
 `
 
 const LocationInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: ${({ theme }) => theme.spacing?.sm ?? '8px'} ${({ theme }) => theme.spacing?.md ?? '16px'};
   background-color: ${({ theme }) => theme.colors?.surface ?? '#F9FAFB'};
   border-radius: 6px;
   font-size: 0.875rem;
   color: ${({ theme }) => theme.colors?.secondary ?? '#6B7280'};
+`
+
+const CountryFlag = styled.span`
+  font-size: 1rem;
 `
 
 const ButtonGroup = styled.div`
@@ -129,7 +136,9 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   &:hover {
     opacity: ${({ $variant }) => ($variant === 'secondary' ? 1 : 0.9)};
     background-color: ${({ theme, $variant }) =>
-      $variant === 'secondary' ? (theme.colors?.border ?? '#E5E7EB') : (theme.colors?.primary ?? '#3B82F6')};
+      $variant === 'secondary'
+        ? (theme.colors?.border ?? '#E5E7EB')
+        : (theme.colors?.primary ?? '#3B82F6')};
   }
 
   &:focus {
@@ -164,17 +173,17 @@ const initialFormState: FormState = {
   address: '',
 }
 
-export function RecordForm({
-  sido,
-  sigungu,
-  recordId,
-  onSuccess,
-  onCancel,
-}: RecordFormProps) {
+const COUNTRY_FLAGS: Record<Country, string> = {
+  korea: '🇰🇷',
+  japan: '🇯🇵',
+}
+
+export function RecordForm({ sido, sigungu, recordId, onSuccess, onCancel }: RecordFormProps) {
   const [formState, setFormState] = useState<FormState>(initialFormState)
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const { selectedCountry } = useMapStore()
   const { addRecord: addToStore, updateRecord: updateInStore } = useRecordStore()
 
   const isEditing = !!recordId
@@ -239,6 +248,7 @@ export function RecordForm({
 
       try {
         const recordInput: RecordInput = {
+          country: selectedCountry,
           sido,
           sigungu,
           title: formState.title.trim(),
@@ -266,6 +276,7 @@ export function RecordForm({
     },
     [
       formState,
+      selectedCountry,
       sido,
       sigungu,
       recordId,
@@ -277,12 +288,17 @@ export function RecordForm({
     ]
   )
 
+  // 일본은 시구정촌이 없으므로 도도부현만 표시
+  const locationDisplay =
+    selectedCountry === 'japan' ? sigungu || sido : sigungu ? `${sido} ${sigungu}` : sido
+
   return (
     <Form onSubmit={handleSubmit}>
       <FormGroup>
         <Label>위치</Label>
         <LocationInfo>
-          {sido} {sigungu}
+          <CountryFlag>{COUNTRY_FLAGS[selectedCountry]}</CountryFlag>
+          {locationDisplay}
         </LocationInfo>
       </FormGroup>
 
@@ -314,12 +330,7 @@ export function RecordForm({
 
       <FormGroup>
         <Label htmlFor="category">카테고리</Label>
-        <Select
-          id="category"
-          name="category"
-          value={formState.category}
-          onChange={handleChange}
-        >
+        <Select id="category" name="category" value={formState.category} onChange={handleChange}>
           {CATEGORIES.map((cat) => (
             <option key={cat.value} value={cat.value}>
               {cat.label}

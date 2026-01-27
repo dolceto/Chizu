@@ -9,4 +9,19 @@ db.version(1).stores({
   records: 'id, sido, sigungu, category, visitedAt, createdAt',
 })
 
+db.version(2)
+  .stores({
+    records: 'id, country, sido, sigungu, category, visitedAt, createdAt',
+  })
+  .upgrade((tx) => {
+    return tx
+      .table('records')
+      .toCollection()
+      .modify((record) => {
+        if (!record.country) {
+          record.country = 'korea'
+        }
+      })
+  })
+
 export { db }

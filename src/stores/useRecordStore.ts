@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Record } from '@/types'
+import type { Record, Country } from '@/types'
 
 interface RecordState {
   records: Record[]
@@ -17,10 +17,11 @@ interface RecordState {
   setError: (error: string | null) => void
 
   // Computed helpers
-  getRecordsBySido: (sido: string) => Record[]
-  getRecordsBySigungu: (sido: string, sigungu: string) => Record[]
-  getRecordCountBySido: (sido: string) => number
-  getRecordCountBySigungu: (sido: string, sigungu: string) => number
+  getRecordsBySido: (sido: string, country?: Country) => Record[]
+  getRecordsBySigungu: (sido: string, sigungu: string, country?: Country) => Record[]
+  getRecordCountBySido: (sido: string, country?: Country) => number
+  getRecordCountBySigungu: (sido: string, sigungu: string, country?: Country) => number
+  getRecordsByCountry: (country: Country) => Record[]
 }
 
 export const useRecordStore = create<RecordState>((set, get) => ({
@@ -55,19 +56,43 @@ export const useRecordStore = create<RecordState>((set, get) => ({
 
   setError: (error) => set({ error }),
 
-  getRecordsBySido: (sido) => {
-    return get().records.filter((r) => r.sido === sido)
+  getRecordsBySido: (sido, country) => {
+    const records = get().records
+    if (country) {
+      return records.filter((r) => r.sido === sido && r.country === country)
+    }
+    return records.filter((r) => r.sido === sido)
   },
 
-  getRecordsBySigungu: (sido, sigungu) => {
-    return get().records.filter((r) => r.sido === sido && r.sigungu === sigungu)
+  getRecordsBySigungu: (sido, sigungu, country) => {
+    const records = get().records
+    if (country) {
+      return records.filter(
+        (r) => r.sido === sido && r.sigungu === sigungu && r.country === country
+      )
+    }
+    return records.filter((r) => r.sido === sido && r.sigungu === sigungu)
   },
 
-  getRecordCountBySido: (sido) => {
-    return get().records.filter((r) => r.sido === sido).length
+  getRecordCountBySido: (sido, country) => {
+    const records = get().records
+    if (country) {
+      return records.filter((r) => r.sido === sido && r.country === country).length
+    }
+    return records.filter((r) => r.sido === sido).length
   },
 
-  getRecordCountBySigungu: (sido, sigungu) => {
-    return get().records.filter((r) => r.sido === sido && r.sigungu === sigungu).length
+  getRecordCountBySigungu: (sido, sigungu, country) => {
+    const records = get().records
+    if (country) {
+      return records.filter(
+        (r) => r.sido === sido && r.sigungu === sigungu && r.country === country
+      ).length
+    }
+    return records.filter((r) => r.sido === sido && r.sigungu === sigungu).length
+  },
+
+  getRecordsByCountry: (country) => {
+    return get().records.filter((r) => r.country === country)
   },
 }))

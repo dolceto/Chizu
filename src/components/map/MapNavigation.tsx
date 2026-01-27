@@ -1,5 +1,7 @@
+import { useCallback } from 'react'
 import styled from 'styled-components'
 import { useMapStore } from '@/stores'
+import type { Country } from '@/types'
 
 const NavContainer = styled.div`
   position: absolute;
@@ -13,6 +15,32 @@ const NavContainer = styled.div`
   background: ${({ theme }) => theme.colors?.background ?? '#ffffff'};
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+`
+
+const CountrySelect = styled.select`
+  padding: 6px 28px 6px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors?.text ?? '#374151'};
+  background-color: ${({ theme }) => theme.colors?.surface ?? '#F3F4F6'};
+  border: 1px solid ${({ theme }) => theme.colors?.border ?? '#E5E7EB'};
+  border-radius: 6px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
+    box-shadow: 0 0 0 2px ${({ theme }) => (theme.colors?.primary ? theme.colors.primary + '20' : 'rgba(59, 130, 246, 0.2)')};
+  }
 `
 
 const BackButton = styled.button`
@@ -66,14 +94,29 @@ interface MapNavigationProps {
   showBackButton?: boolean
 }
 
+const COUNTRY_NAMES = {
+  korea: '대한민국',
+  japan: '日本',
+} as const
+
 export function MapNavigation({ showBackButton = true }: MapNavigationProps) {
-  const { currentLevel, selectedSido, drillUp } = useMapStore()
+  const { selectedCountry, currentLevel, selectedSido, drillUp, setCountry } = useMapStore()
 
   const isCountryLevel = currentLevel === 'country'
 
+  // 일본은 드릴다운이 없으므로 뒤로 버튼 숨김
+  const showBack = showBackButton && !isCountryLevel && selectedCountry === 'korea'
+
+  const handleCountryChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setCountry(e.target.value as Country)
+    },
+    [setCountry]
+  )
+
   return (
     <NavContainer>
-      {!isCountryLevel && showBackButton && (
+      {showBack && (
         <BackButton onClick={drillUp}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -82,15 +125,17 @@ export function MapNavigation({ showBackButton = true }: MapNavigationProps) {
         </BackButton>
       )}
 
-      <Breadcrumb>
-        <BreadcrumbItem $isActive={isCountryLevel}>대한민국</BreadcrumbItem>
-        {selectedSido && (
-          <>
-            <Separator>/</Separator>
-            <BreadcrumbItem $isActive={!isCountryLevel}>{selectedSido}</BreadcrumbItem>
-          </>
-        )}
-      </Breadcrumb>
+      <CountrySelect value={selectedCountry} onChange={handleCountryChange}>
+        <option value="korea">{COUNTRY_NAMES.korea}</option>
+        <option value="japan">{COUNTRY_NAMES.japan}</option>
+      </CountrySelect>
+
+      {selectedSido && selectedCountry === 'korea' && (
+        <Breadcrumb>
+          <Separator>/</Separator>
+          <BreadcrumbItem $isActive={!isCountryLevel}>{selectedSido}</BreadcrumbItem>
+        </Breadcrumb>
+      )}
     </NavContainer>
   )
 }

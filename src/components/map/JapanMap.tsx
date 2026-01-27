@@ -4,15 +4,16 @@ import styled from 'styled-components'
 import { useMapStore } from '@/stores'
 import { getHeatmapColor } from '@/types'
 import { MapTooltip } from './MapTooltip'
+import { getPrefectureNameKo } from './prefectureNames'
 
-const SIDO_GEO_URL = '/data/geojson/korea/sido.json'
+const PREFECTURES_GEO_URL = '/data/geojson/japan/prefectures.json'
 
-const KOREA_CENTER: [number, number] = [127.7669, 35.9078]
-const KOREA_SCALE = 30000
+const JAPAN_CENTER: [number, number] = [138.0, 38.0]
+const JAPAN_SCALE = 10000
 
-interface KoreaMapProps {
+interface JapanMapProps {
   recordCounts?: Record<string, number>
-  onSidoClick?: (name: string, code: string) => void
+  onPrefectureClick?: (name: string, code: string) => void
 }
 
 const HEADER_HEIGHT = '65px'
@@ -35,14 +36,17 @@ const MapContainer = styled.div`
   }
 `
 
-export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick }: KoreaMapProps) {
+export const JapanMap = memo(function JapanMap({
+  recordCounts = {},
+  onPrefectureClick,
+}: JapanMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     const svg = mapRef.current?.querySelector('svg')
     if (svg) {
-      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid slice')
     }
   }, [])
 
@@ -61,7 +65,8 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
     setZoom,
     setCenter,
     setHoveredRegion,
-    drillDown,
+    openModal,
+    setSelectedSigungu,
   } = useMapStore()
 
   const selectedMobileRegionRef = useRef<string | null>(null)
@@ -69,7 +74,7 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
   const handleMouseEnter = useCallback(
     (name: string) => {
       if (isMobile) return
-      setHoveredRegion(name)
+      setHoveredRegion(getPrefectureNameKo(name))
     },
     [setHoveredRegion, isMobile]
   )
@@ -84,7 +89,7 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
       if (isMobile) return
       const bounds = mapRef.current?.getBoundingClientRect()
       if (bounds) {
-        setHoveredRegion(name, {
+        setHoveredRegion(getPrefectureNameKo(name), {
           x: event.clientX - bounds.left,
           y: event.clientY - bounds.top,
         })
@@ -93,13 +98,14 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
     [setHoveredRegion, isMobile]
   )
 
-
   const handleClick = useCallback(
     (name: string, code: string) => {
-      drillDown(name)
-      onSidoClick?.(name, code)
+      // 일본은 도도부현 레벨에서 바로 모달 열기 (시구정촌 데이터 없음)
+      setSelectedSigungu(name)
+      openModal('region')
+      onPrefectureClick?.(name, code)
     },
-    [drillDown, onSidoClick]
+    [setSelectedSigungu, openModal, onPrefectureClick]
   )
 
   const handleMobileTap = useCallback(
@@ -109,23 +115,24 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
       const bounds = mapRef.current?.getBoundingClientRect()
 
       if (selectedMobileRegionRef.current === name) {
-        // 두 번째 탭 - 드릴다운
+        // 두 번째 탭 - 모달 열기
         setHoveredRegion(null)
         selectedMobileRegionRef.current = null
-        drillDown(name)
-        onSidoClick?.(name, code)
+        setSelectedSigungu(name)
+        openModal('region')
+        onPrefectureClick?.(name, code)
       } else {
         // 첫 번째 탭 - 호버 상태 표시
         selectedMobileRegionRef.current = name
         if (bounds) {
-          setHoveredRegion(name, {
+          setHoveredRegion(getPrefectureNameKo(name), {
             x: event.clientX - bounds.left,
             y: event.clientY - bounds.top,
           })
         }
       }
     },
-    [isMobile, drillDown, onSidoClick, setHoveredRegion]
+    [isMobile, setSelectedSigungu, openModal, onPrefectureClick, setHoveredRegion]
   )
 
   const handleMoveEnd = useCallback(
@@ -141,8 +148,8 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
-          scale: KOREA_SCALE,
-          center: KOREA_CENTER,
+          scale: JAPAN_SCALE,
+          center: JAPAN_CENTER,
         }}
         width={5000}
         height={5000}
@@ -159,13 +166,13 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
             [Infinity, Infinity],
           ]}
         >
-          <Geographies geography={SIDO_GEO_URL}>
+          <Geographies geography={PREFECTURES_GEO_URL}>
             {({ geographies }) =>
               geographies.map((geo) => {
                 const name = geo.properties.name as string
                 const code = geo.properties.code as string
                 const count = recordCounts[name] ?? 0
-                const isHovered = hoveredRegion === name
+                const isHovered = hoveredRegion === getPrefectureNameKo(name)
 
                 return (
                   <Geography
@@ -175,7 +182,9 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
                     onMouseEnter={() => handleMouseEnter(name)}
                     onMouseLeave={handleMouseLeave}
                     onMouseMove={(e) => handleMouseMove(e, name)}
-                    onPointerUp={(e) => handleMobileTap(e as unknown as React.PointerEvent, name, code)}
+                    onPointerUp={(e) =>
+                      handleMobileTap(e as unknown as React.PointerEvent, name, code)
+                    }
                     style={{
                       default: {
                         fill: isHovered ? '#60A5FA' : getHeatmapColor(count),
@@ -212,4 +221,4 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
   )
 })
 
-KoreaMap.displayName = 'KoreaMap'
+JapanMap.displayName = 'JapanMap'

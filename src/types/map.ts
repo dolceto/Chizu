@@ -1,3 +1,5 @@
+import type { Country } from './record'
+
 export type MapLevel = 'country' | 'sido'
 
 export interface TooltipPosition {
@@ -9,6 +11,7 @@ export type ModalType = 'region' | 'record' | 'form'
 
 export interface MapState {
   // Current view
+  selectedCountry: Country
   currentLevel: MapLevel
   selectedSido?: string
   selectedSigungu?: string

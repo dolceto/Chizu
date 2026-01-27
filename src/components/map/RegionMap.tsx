@@ -41,7 +41,7 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
   useEffect(() => {
     const svg = mapRef.current?.querySelector('svg')
     if (svg) {
-      svg.setAttribute('preserveAspectRatio', 'xMidYMid slice')
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
     }
   }, [])
 
