@@ -11,11 +11,11 @@
 - [x] 한국 시/도 GeoJSON 데이터 수집 - 완료
 - [x] 한국 시/군/구 GeoJSON 데이터 수집 - 완료
 - [x] Phase 4: 드릴다운 구현 - 완료
-  - [x] KoreaMap.tsx - 전국 시/도 지도
-  - [x] RegionMap.tsx - 시/군/구 지도
-  - [x] MapNavigation.tsx - 뒤로가기 네비
-  - [x] MainMap.tsx - 드릴다운 전환 컨테이너
-  - [x] sidoConfig.ts - 17개 시/도 설정
+- [x] Phase 8: 페이지 통합 - 완료
+  - [x] pages/index.tsx에 MainMap 연결
+  - [x] 기록 데이터 연동 (IndexedDB)
+  - [x] .babelrc 삭제, SWC 전환
+  - [ ] 성능 최적화 (대기)
 
 ### 작업 로그
 | 시간 | 작업 내용 | 상태 |
@@ -39,6 +39,9 @@
 | 10:57 | sidoConfig.ts (17개 시/도 설정) 생성 | 완료 |
 | 10:58 | MapNavigation.tsx, MainMap.tsx 생성 | 완료 |
 | 10:59 | 린트 확인, public GeoJSON 복사 | 완료 |
+| 11:20 | Phase 8 페이지 통합 시작 | 완료 |
+| 11:22 | pages/index.tsx - MainMap, 헤더, 최근기록 | 완료 |
+| 11:23 | .babelrc 삭제, SWC 컴파일러 전환 | 완료 |
 
 ---
 
@@ -48,15 +51,11 @@
 ### 현재 작업
 - [x] Phase 3: 지도 기본 구현 완료 (서울)
 - [x] Phase 6: UI 구현 - 완료
-  - [x] RecordModal.tsx - 반응형 모달
-  - [x] RecordForm.tsx - 기록 폼
-  - [x] RecordList.tsx - 기록 목록
+- [x] Phase 7: 핀 마커 구현 - 완료
+  - [x] PinMarker.tsx - 핀 마커 컴포넌트
 
 ### 작업 대상 파일
-- src/components/ui/RecordModal.tsx
-- src/components/ui/RecordForm.tsx
-- src/components/ui/RecordList.tsx
-- src/components/ui/index.ts
+- src/components/map/PinMarker.tsx (완료)
 
 ### 작업 로그
 | 시간 | 작업 내용 | 상태 |
@@ -74,6 +73,8 @@
 | 11:06 | RecordForm.tsx 생성 | 완료 |
 | 11:07 | RecordList.tsx 생성 | 완료 |
 | 11:08 | index.ts 배럴 파일 생성, 빌드 성공 | 완료 |
+| 11:25 | Phase 7 - PinMarker.tsx 생성 | 완료 |
+| 11:26 | index.ts export 추가, 빌드 성공 | 완료 |
 
 ---
 
@@ -82,7 +83,15 @@
 
 ### 현재 작업
 - [x] KoreaMap.tsx 확인 → 이미 T1이 구현 완료
-- [ ] 다음 작업 대기
+- [x] Phase 8: 에러 처리 + 반응형
+  - [x] src/utils/error.ts - 에러 처리 유틸
+  - [x] styles/ 반응형 미디어쿼리 추가
+
+### 작업 대상 파일
+- src/utils/error.ts (완료)
+- src/utils/index.ts (완료)
+- styles/theme.ts (완료)
+- styles/global-styles.ts (완료)
 
 ### 작업 로그
 | 시간 | 작업 내용 | 상태 |
@@ -90,6 +99,10 @@
 | 10:50 | 세션 시작, WORKSPACE.md 확인 | 완료 |
 | 10:51 | SeoulMap.tsx 패턴 분석, sido.json 구조 확인 | 완료 |
 | 10:52 | KoreaMap.tsx 확인 → T1이 이미 구현 완료 | 완료 |
+| 11:15 | Phase 8 에러 처리 + 반응형 작업 시작 | 완료 |
+| 11:16 | src/utils/error.ts 생성 (Result 타입, tryCatch) | 완료 |
+| 11:17 | styles/theme.ts 반응형 breakpoints 추가 | 완료 |
+| 11:18 | styles/global-styles.ts 반응형 스타일 추가 | 완료 |
 
 ---
 
@@ -133,10 +146,11 @@
 
 #### Phase 7: 시각화 구현
 - [x] 히트맵 색상 적용 (SeoulMap에 적용)
-- [ ] 핀 마커 렌더링 (PinMarker.tsx)
+- [x] 핀 마커 렌더링 (PinMarker.tsx) - T2 완료
 - [x] 범례 UI (MapLegend.tsx)
 
-#### Phase 8: 마무리
+#### Phase 8: 통합 및 마무리
+- [ ] 페이지 통합 (pages/index.tsx)
 - [ ] 반응형 대응
 - [ ] 에러 처리
 - [ ] 성능 최적화
@@ -164,3 +178,4 @@
 | 2026-01-27 | T1 | 전국 시/군/구 GeoJSON 수집 | src/data/geojson/korea/sigungu.json |
 | 2026-01-27 | T1 | Phase 4 드릴다운 구현 완료 | src/components/map/KoreaMap.tsx, RegionMap.tsx, MainMap.tsx, MapNavigation.tsx, sidoConfig.ts |
 | 2026-01-27 | T2 | Phase 6 UI 구현 완료 | src/components/ui/RecordModal.tsx, RecordForm.tsx, RecordList.tsx, index.ts |
+| 2026-01-27 | T2 | Phase 7 핀 마커 구현 완료 | src/components/map/PinMarker.tsx |
