@@ -179,9 +179,10 @@ export const JapanRegionMap = memo(function JapanRegionMap({
     }
 
     for (const feature of filteredFeatures) {
-      extractCoords(
-        (feature as Feature<Geometry>).geometry.coordinates as unknown[]
-      )
+      const geom = feature.geometry as { coordinates?: unknown }
+      if (geom.coordinates) {
+        extractCoords(geom.coordinates as unknown[])
+      }
     }
 
     if (minLon === Infinity) return null
@@ -288,7 +289,7 @@ export const JapanRegionMap = memo(function JapanRegionMap({
           const count = recordCounts[nameKo] ?? recordCounts[name] ?? 0
           const isHovered = hoveredRegion === nameKo
 
-          if (!name) return null
+          if (!name || !pathGenerator) return null
 
           let d = pathGenerator(feature as Feature<Geometry>)
           if (!d) return null
