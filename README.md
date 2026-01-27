@@ -1,19 +1,38 @@
-# Next.js Boilerplate
+# Chizu (地図)
 
-Next.js 16 + TypeScript + styled-components 보일러플레이트
+지역별 방문 기록을 시각화하는 인터랙티브 지도 다이어리
+
+## 개요
+
+Chizu는 한국 지도를 시/도, 시/군/구 단위로 탐색하며 방문 기록을 남길 수 있는 웹 애플리케이션입니다. 방문 횟수에 따른 히트맵 시각화와 특정 장소 핀 마커 기능을 제공합니다.
+
+## 주요 기능
+
+| 기능 | 설명 |
+|------|------|
+| 한국 지도 | 시/도 17개 경계선 표시 및 클릭 인터랙션 |
+| 시/군/구 상세 | 시/도 클릭 시 하위 행정구역 드릴다운 |
+| 히트맵 | 기록 수에 따른 지역별 색상 구분 |
+| 핀 마커 | 좌표 기반 특정 장소 표시 |
+| 확대/축소/패닝 | 마우스 휠 및 드래그로 지도 조작 |
+| 반응형 모달 | 지역/핀 클릭 시 상세 정보 표시 |
+| 기록 관리 | 방문 기록 생성/조회/수정/삭제 |
+| 로컬 저장 | IndexedDB 기반 오프라인 데이터 저장 |
 
 ## 기술 스택
 
 | 분류 | 기술 |
 |------|------|
-| Framework | Next.js 16 (Pages Router) |
-| Language | TypeScript 5.9 |
-| Runtime | Node.js 25.2.1 |
-| Styling | styled-components 6 |
-| Linting | ESLint 9 (Flat Config), typescript-eslint |
-| Formatting | Prettier |
+| Framework | Next.js (Pages Router) |
+| Language | TypeScript |
+| Map | react-simple-maps, D3-geo |
+| State | Zustand |
+| Local DB | Dexie.js (IndexedDB) |
+| Styling | styled-components |
+| UI Components | Radix UI |
+| Linting | ESLint, Prettier |
 | Git Hooks | Husky, Commitlint |
-| Package Manager | pnpm 10.28.0 (필수) |
+| Package Manager | pnpm |
 
 ## 시작하기
 
@@ -47,54 +66,106 @@ http://localhost:3000 에서 확인
 ## 디렉토리 구조
 
 ```
-├── .husky/              # Git Hooks 설정
-│   ├── pre-commit       # 커밋 전 lint 실행
-│   └── commit-msg       # 커밋 메시지 검증
-├── pages/               # 페이지 라우팅
-│   ├── _app.tsx         # 앱 진입점 (테마, 글로벌 스타일)
-│   ├── _document.tsx    # HTML 문서 (SSR 설정)
-│   └── index.tsx        # 메인 페이지
-├── public/              # 정적 파일 (이미지, 폰트 등)
-├── styles/              # 스타일 설정
-│   ├── global-styles.ts # 글로벌 스타일
-│   ├── styled.d.ts      # 테마 타입 정의
-│   └── theme.ts         # 테마 설정
-├── .env.example         # 환경변수 템플릿
-├── .nvmrc               # Node 버전
-├── eslint.config.mjs    # ESLint 9 설정
-├── commitlint.config.js # 커밋 메시지 규칙
-└── package.json
+src/
+├── components/
+│   ├── map/
+│   │   ├── korea/              # 한국 지도 컴포넌트
+│   │   │   ├── KoreaMap.tsx    # 전국 시/도 지도
+│   │   │   ├── RegionMap.tsx   # 시/군/구 상세 지도
+│   │   │   ├── MapPath.tsx     # 개별 지역 SVG path
+│   │   │   ├── PinMarker.tsx   # 장소 핀 마커
+│   │   │   ├── MapTooltip.tsx  # 호버 툴팁
+│   │   │   └── index.ts
+│   │   ├── common/             # 공통 지도 컴포넌트
+│   │   │   ├── MapContainer.tsx
+│   │   │   ├── ZoomControls.tsx
+│   │   │   └── MapLegend.tsx
+│   │   └── index.ts
+│   ├── modal/
+│   │   ├── RecordModal.tsx     # 기록 상세 모달
+│   │   ├── RecordForm.tsx      # 기록 입력 폼
+│   │   └── RecordList.tsx      # 기록 목록
+│   └── ui/                     # 공통 UI 컴포넌트
+├── stores/
+│   ├── useRecordStore.ts       # 기록 상태 관리
+│   └── useMapStore.ts          # 지도 상태 관리
+├── db/
+│   ├── index.ts                # Dexie 설정
+│   └── records.ts              # 기록 CRUD
+├── data/
+│   └── geojson/
+│       └── korea/
+│           ├── sido.json       # 시/도 경계 데이터
+│           └── sigungu/        # 시/군/구 경계 데이터
+│               ├── seoul.json
+│               ├── busan.json
+│               └── ...
+├── types/
+│   ├── record.ts               # 기록 타입 정의
+│   └── map.ts                  # 지도 타입 정의
+└── pages/
+    └── index.tsx               # 메인 페이지
 ```
 
-## 테마 사용
+## 데이터 구조
+
+### Record (기록)
 
 ```typescript
-import styled from 'styled-components';
+interface Record {
+  id: string
 
-const Box = styled.div`
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text};
-  padding: ${({ theme }) => theme.spacing.md};
-`;
+  // 위치 정보
+  sido: string           // "서울특별시"
+  sigungu: string        // "강남구"
+  address?: string       // 상세 주소
+  coordinates?: {        // 핀 마커용 좌표
+    lat: number
+    lng: number
+  }
+
+  // 기록 내용
+  title: string
+  memo?: string
+  category?: string      // "카페" | "맛집" | "여행" 등
+  photos?: string[]
+
+  // 시간
+  visitedAt: string      // 방문 날짜
+  createdAt: string
+  updatedAt: string
+}
 ```
 
-### 테마 속성
+### 히트맵 색상 등급
 
-```typescript
-// colors
-theme.colors.primary     // #007bff
-theme.colors.secondary   // #6c757d
-theme.colors.background  // #ffffff
-theme.colors.text        // #212529
-theme.colors.border      // #dee2e6
+| 방문 횟수 | 색상 |
+|----------|------|
+| 0회 | 회색 |
+| 1-5회 | 연한 파랑 |
+| 6-20회 | 초록 |
+| 21-50회 | 노랑 |
+| 51-100회 | 주황 |
+| 100회+ | 빨강 |
 
-// spacing
-theme.spacing.xs  // 4px
-theme.spacing.sm  // 8px
-theme.spacing.md  // 16px
-theme.spacing.lg  // 24px
-theme.spacing.xl  // 32px
-```
+## 로드맵
+
+### 1차 MVP
+- [x] 프로젝트 설정
+- [ ] 한국 지도 렌더링 (시/도)
+- [ ] 시/군/구 드릴다운
+- [ ] 확대/축소/패닝
+- [ ] 히트맵 시각화
+- [ ] 핀 마커
+- [ ] 기록 CRUD
+- [ ] 반응형 모달
+- [ ] 로컬 저장 (IndexedDB)
+
+### 2차
+- [ ] 소셜 로그인
+- [ ] 서버/DB 연동
+- [ ] 사용자별 데이터 분리
+- [ ] 다른 국가 지도 확장
 
 ## 커밋 규칙
 
@@ -102,9 +173,9 @@ theme.spacing.xl  // 32px
 
 ```bash
 # 예시
-feat(auth): 로그인 기능 추가
-fix(api): 응답 파싱 오류 수정
-docs(readme): 설치 가이드 추가
+feat(map): 한국 지도 컴포넌트 추가
+fix(modal): 모달 닫힘 버그 수정
+docs(readme): 기능 설명 추가
 ```
 
 | Type | 설명 |
