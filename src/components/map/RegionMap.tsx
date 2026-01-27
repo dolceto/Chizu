@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo } from 'react'
+import { useRef, useCallback, useMemo, memo } from 'react'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
 import styled from 'styled-components'
 import { useMapStore } from '@/stores'
@@ -21,7 +21,7 @@ const MapContainer = styled.div`
   margin: 0 auto;
 `
 
-export function RegionMap({ sidoName, recordCounts = {}, onSigunguClick }: RegionMapProps) {
+export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, onSigunguClick }: RegionMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -151,4 +151,6 @@ export function RegionMap({ sidoName, recordCounts = {}, onSigunguClick }: Regio
       <MapTooltip region={hoveredRegion} position={tooltipPosition} />
     </MapContainer>
   )
-}
+})
+
+RegionMap.displayName = 'RegionMap'

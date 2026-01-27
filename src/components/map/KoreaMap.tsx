@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, memo } from 'react'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
 import styled from 'styled-components'
 import { useMapStore } from '@/stores'
@@ -22,7 +22,7 @@ const MapContainer = styled.div`
   margin: 0 auto;
 `
 
-export function KoreaMap({ recordCounts = {}, onSidoClick }: KoreaMapProps) {
+export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick }: KoreaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -141,4 +141,6 @@ export function KoreaMap({ recordCounts = {}, onSidoClick }: KoreaMapProps) {
       <MapTooltip region={hoveredRegion} position={tooltipPosition} />
     </MapContainer>
   )
-}
+})
+
+KoreaMap.displayName = 'KoreaMap'

@@ -11,11 +11,11 @@
 - [x] 한국 시/도 GeoJSON 데이터 수집 - 완료
 - [x] 한국 시/군/구 GeoJSON 데이터 수집 - 완료
 - [x] Phase 4: 드릴다운 구현 - 완료
-- [x] Phase 8: 페이지 통합 - 완료
+- [x] Phase 8: 페이지 통합 + 성능 최적화 - 완료
   - [x] pages/index.tsx에 MainMap 연결
   - [x] 기록 데이터 연동 (IndexedDB)
   - [x] .babelrc 삭제, SWC 전환
-  - [ ] 성능 최적화 (대기)
+  - [x] 성능 최적화 완료
 
 ### 작업 로그
 | 시간 | 작업 내용 | 상태 |
@@ -42,6 +42,9 @@
 | 11:20 | Phase 8 페이지 통합 시작 | 완료 |
 | 11:22 | pages/index.tsx - MainMap, 헤더, 최근기록 | 완료 |
 | 11:23 | .babelrc 삭제, SWC 컴파일러 전환 | 완료 |
+| 11:30 | 성능 최적화 - React.memo 적용 | 완료 |
+| 11:31 | 성능 최적화 - dynamic import 적용 | 완료 |
+| 11:32 | 성능 최적화 - next.config.js 설정 | 완료 |
 
 ---
 
@@ -150,10 +153,10 @@
 - [x] 범례 UI (MapLegend.tsx)
 
 #### Phase 8: 통합 및 마무리
-- [ ] 페이지 통합 (pages/index.tsx)
-- [ ] 반응형 대응
-- [ ] 에러 처리
-- [ ] 성능 최적화
+- [x] 페이지 통합 (pages/index.tsx) - T1 완료
+- [x] 반응형 대응 - T3 완료
+- [x] 에러 처리 - T3 완료
+- [x] 성능 최적화 - T1 완료
 
 ---
 
@@ -179,3 +182,6 @@
 | 2026-01-27 | T1 | Phase 4 드릴다운 구현 완료 | src/components/map/KoreaMap.tsx, RegionMap.tsx, MainMap.tsx, MapNavigation.tsx, sidoConfig.ts |
 | 2026-01-27 | T2 | Phase 6 UI 구현 완료 | src/components/ui/RecordModal.tsx, RecordForm.tsx, RecordList.tsx, index.ts |
 | 2026-01-27 | T2 | Phase 7 핀 마커 구현 완료 | src/components/map/PinMarker.tsx |
+| 2026-01-27 | T3 | Phase 8 에러처리, 반응형 완료 | src/utils/error.ts, styles/theme.ts, styles/global-styles.ts |
+| 2026-01-27 | T1 | Phase 8 페이지 통합 완료 | pages/index.tsx |
+| 2026-01-27 | T1 | Phase 8 성능 최적화 완료 | KoreaMap.tsx, RegionMap.tsx, next.config.js |

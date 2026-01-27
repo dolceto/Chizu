@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import styled from 'styled-components'
-import { MainMap } from '@/components/map'
 import { RecordModal } from '@/components/ui'
+
+const MainMap = dynamic(() => import('@/components/map/MainMap').then((mod) => mod.MainMap), {
+  ssr: false,
+  loading: () => <MapLoading>지도 로딩 중...</MapLoading>,
+})
 import type { Record as VisitRecord } from '@/types'
 import { useMapStore, useRecordStore } from '@/stores'
 import { getAllRecords } from '@/db/records'
@@ -55,6 +60,21 @@ const Button = styled.button<{ $primary?: boolean }>`
 const Main = styled.main`
   flex: 1;
   padding: 24px;
+`
+
+const MapLoading = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 900px;
+  height: 500px;
+  margin: 0 auto;
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 8px;
+  color: ${({ theme }) => theme.colors.secondary};
+  font-size: 14px;
 `
 
 const RecentSection = styled.section`
