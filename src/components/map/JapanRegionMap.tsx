@@ -1,12 +1,13 @@
 import { useRef, useCallback, useMemo, useEffect, useState, memo } from 'react'
 import { geoMercator, geoPath } from 'd3-geo'
-import { zoom as d3Zoom, zoomIdentity } from 'd3-zoom'
+import { zoom as d3Zoom, zoomIdentity, ZoomBehavior } from 'd3-zoom'
 import { select } from 'd3-selection'
+import 'd3-transition' // transition 메서드 확장을 위해 import
 import styled from 'styled-components'
 import { useMapStore } from '@/stores'
 import { getHeatmapColor } from '@/types'
 import { MapTooltip } from './MapTooltip'
-import { PREFECTURE_CONFIG } from './prefectureConfig'
+import { PREFECTURE_CONFIG, IslandConfig } from './prefectureConfig'
 import { getMunicipalityNameKo } from './japaneseToKorean'
 import type { Feature, FeatureCollection, Geometry } from 'geojson'
 
@@ -53,6 +54,59 @@ const RegionPath = styled.path<{ $isHovered: boolean; $fill: string }>`
   }
 `
 
+const IslandNavPanel = styled.div`
+  position: absolute;
+  top: 100px;
+  left: 16px;
+  background: ${({ theme }) => theme.colors?.background ?? '#ffffff'};
+  border: 1px solid ${({ theme }) => theme.colors?.border ?? '#e5e7eb'};
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  min-width: 140px;
+`
+
+const IslandNavTitle = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors?.textSecondary ?? '#6b7280'};
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`
+
+const IslandButton = styled.button<{ $active?: boolean }>`
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  border: 1px solid ${({ theme, $active }) => ($active ? '#3b82f6' : theme.colors?.border ?? '#e5e7eb')};
+  border-radius: 6px;
+  background: ${({ $active }) => ($active ? '#eff6ff' : 'transparent')};
+  color: ${({ theme, $active }) => ($active ? '#1d4ed8' : theme.colors?.text ?? '#374151')};
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: ${({ $active }) => ($active ? '#dbeafe' : '#f3f4f6')};
+    border-color: #3b82f6;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`
+
+const Divider = styled.div`
+  height: 1px;
+  background: ${({ theme }) => theme.colors?.border ?? '#e5e7eb'};
+  margin: 8px 0;
+`
+
 interface MunicipalityProperties {
   N03_001?: string
   N03_002?: string
@@ -77,9 +131,11 @@ export const JapanRegionMap = memo(function JapanRegionMap({
   const mapRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const gRef = useRef<SVGGElement>(null)
+  const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null)
   const [geoData, setGeoData] = useState<FeatureCollection | null>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [isMobile, setIsMobile] = useState(false)
+  const [currentView, setCurrentView] = useState<'mainland' | string>('mainland')
 
   useEffect(() => {
     const checkMobile = () => {
@@ -120,6 +176,7 @@ export const JapanRegionMap = memo(function JapanRegionMap({
         g.attr('transform', `translate(${x},${y}) scale(${k})`)
       })
 
+    zoomBehaviorRef.current = zoomBehavior
     svg.call(zoomBehavior)
 
     // 초기 transform 리셋
@@ -129,6 +186,11 @@ export const JapanRegionMap = memo(function JapanRegionMap({
       svg.on('.zoom', null)
     }
   }, [dimensions])
+
+  // 도도부현 변경 시 view 리셋
+  useEffect(() => {
+    setCurrentView('mainland')
+  }, [prefectureName])
 
   const {
     hoveredRegion,
@@ -233,6 +295,64 @@ export const JapanRegionMap = memo(function JapanRegionMap({
     [isMobile, setSelectedSigungu, openModal, onMunicipalityClick, setHoveredRegion]
   )
 
+  // 섬 네비게이션: 특정 섬 지역으로 시점 이동
+  const navigateToIsland = useCallback(
+    (island: IslandConfig) => {
+      if (!svgRef.current || !zoomBehaviorRef.current) return
+
+      const svg = select(svgRef.current)
+      const zoomBehavior = zoomBehaviorRef.current
+
+      // 섬의 center/scale로 새로운 projection 계산
+      const baseSize = Math.min(dimensions.width, dimensions.height)
+      const scaleFactor = baseSize / 600
+
+      // 본토 projection과 섬 projection 간의 차이 계산
+      const mainProj = geoMercator()
+        .center(config.center)
+        .scale(config.scale * scaleFactor)
+        .translate([dimensions.width / 2, dimensions.height / 2])
+
+      // 본토 기준으로 섬 중심점의 위치 계산
+      const mainCenter = mainProj(config.center) ?? [0, 0]
+      const islandCenterOnMain = mainProj(island.center) ?? [0, 0]
+
+      // zoom scale 비율 계산
+      const zoomScale = island.scale / config.scale
+
+      // transform 계산
+      const tx =
+        dimensions.width / 2 - (islandCenterOnMain[0] - mainCenter[0]) * zoomScale - mainCenter[0] * zoomScale
+      const ty =
+        dimensions.height / 2 - (islandCenterOnMain[1] - mainCenter[1]) * zoomScale - mainCenter[1] * zoomScale
+
+      // 애니메이션으로 이동
+      svg
+        .transition()
+        .duration(750)
+        .call(zoomBehavior.transform, zoomIdentity.translate(tx, ty).scale(zoomScale))
+
+      setCurrentView(island.name)
+    },
+    [dimensions, config]
+  )
+
+  // 본토로 돌아가기
+  const navigateToMainland = useCallback(() => {
+    if (!svgRef.current || !zoomBehaviorRef.current) return
+
+    const svg = select(svgRef.current)
+    const zoomBehavior = zoomBehaviorRef.current
+
+    // 애니메이션으로 원점 복귀
+    svg.transition().duration(750).call(zoomBehavior.transform, zoomIdentity)
+
+    setCurrentView('mainland')
+  }, [])
+
+  // 섬이 있는 도도부현인지 확인
+  const hasIslands = config.islands && config.islands.length > 0
+
   return (
     <MapContainer ref={mapRef}>
       <StyledSvg ref={svgRef} viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}>
@@ -302,6 +422,25 @@ export const JapanRegionMap = memo(function JapanRegionMap({
       </StyledSvg>
 
       <MapTooltip region={hoveredRegion} position={tooltipPosition} />
+
+      {hasIslands && (
+        <IslandNavPanel>
+          <IslandNavTitle>지역 이동</IslandNavTitle>
+          <IslandButton $active={currentView === 'mainland'} onClick={navigateToMainland}>
+            본토
+          </IslandButton>
+          <Divider />
+          {config.islands?.map((island) => (
+            <IslandButton
+              key={island.name}
+              $active={currentView === island.name}
+              onClick={() => navigateToIsland(island)}
+            >
+              {island.name}
+            </IslandButton>
+          ))}
+        </IslandNavPanel>
+      )}
     </MapContainer>
   )
 })

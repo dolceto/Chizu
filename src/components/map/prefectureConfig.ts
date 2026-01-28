@@ -1,7 +1,15 @@
+export interface IslandConfig {
+  name: string // 섬/제도 이름 (한글)
+  nameJa: string // 일본어 이름
+  center: [number, number]
+  scale: number
+}
+
 interface PrefectureConfig {
   codePrefix: string
   center: [number, number]
   scale: number
+  islands?: IslandConfig[]
 }
 
 // 도도부현별 지도 설정 (시구정촌 레벨용)
@@ -72,6 +80,20 @@ export const PREFECTURE_CONFIG: Record<string, PrefectureConfig> = {
     codePrefix: '13',
     center: [139.5, 35.68],
     scale: 65000, // 본토 중심
+    islands: [
+      {
+        name: '이즈 제도',
+        nameJa: '伊豆諸島',
+        center: [139.4, 34.4],
+        scale: 25000,
+      },
+      {
+        name: '오가사와라 제도',
+        nameJa: '小笠原諸島',
+        center: [142.2, 27.1],
+        scale: 15000,
+      },
+    ],
   },
   神奈川県: {
     codePrefix: '14',
@@ -167,6 +189,14 @@ export const PREFECTURE_CONFIG: Record<string, PrefectureConfig> = {
     codePrefix: '32',
     center: [132.5, 35.1],
     scale: 25000, // 가로로 긴 형태
+    islands: [
+      {
+        name: '오키 제도',
+        nameJa: '隠岐諸島',
+        center: [133.1, 36.2],
+        scale: 40000,
+      },
+    ],
   },
   岡山県: {
     codePrefix: '33',
@@ -217,6 +247,20 @@ export const PREFECTURE_CONFIG: Record<string, PrefectureConfig> = {
     codePrefix: '42',
     center: [129.9, 33.0],
     scale: 28000, // 도서 지역 포함
+    islands: [
+      {
+        name: '고토 열도',
+        nameJa: '五島列島',
+        center: [128.8, 32.7],
+        scale: 30000,
+      },
+      {
+        name: '이키/쓰시마',
+        nameJa: '壱岐・対馬',
+        center: [129.5, 34.3],
+        scale: 25000,
+      },
+    ],
   },
   熊本県: {
     codePrefix: '43',
@@ -237,10 +281,44 @@ export const PREFECTURE_CONFIG: Record<string, PrefectureConfig> = {
     codePrefix: '46',
     center: [130.5, 31.6],
     scale: 25000, // 도서 지역 포함
+    islands: [
+      {
+        name: '야쿠시마/타네가시마',
+        nameJa: '屋久島・種子島',
+        center: [130.5, 30.4],
+        scale: 30000,
+      },
+      {
+        name: '아마미 군도',
+        nameJa: '奄美群島',
+        center: [129.5, 28.3],
+        scale: 18000,
+      },
+    ],
   },
   沖縄県: {
     codePrefix: '47',
     center: [127.8, 26.5],
     scale: 28000, // 도서 지역 포함
+    islands: [
+      {
+        name: '미야코 제도',
+        nameJa: '宮古諸島',
+        center: [125.3, 24.8],
+        scale: 35000,
+      },
+      {
+        name: '야에야마 제도',
+        nameJa: '八重山諸島',
+        center: [124.2, 24.4],
+        scale: 30000,
+      },
+      {
+        name: '다이토 제도',
+        nameJa: '大東諸島',
+        center: [131.2, 25.85],
+        scale: 50000,
+      },
+    ],
   },
 }

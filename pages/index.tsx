@@ -246,68 +246,6 @@ const MapLoading = styled.div`
   font-size: 14px;
 `
 
-const RecentSection = styled.section`
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  right: 16px;
-  max-width: 600px;
-  background: ${({ theme }) => theme.colors.background};
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 10;
-`
-
-const SectionTitle = styled.h2`
-  font-size: 14px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: 12px;
-`
-
-const RecentGrid = styled.div`
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-
-  &::-webkit-scrollbar {
-    height: 4px;
-  }
-`
-
-const RecentCard = styled.div`
-  flex-shrink: 0;
-  width: 160px;
-  padding: 12px;
-  background: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-`
-
-const RecentDate = styled.span`
-  font-size: 12px;
-  color: ${({ theme }) => theme.colors.secondary};
-`
-
-const RecentTitle = styled.h3`
-  margin: 8px 0 4px;
-  font-size: 14px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text};
-`
-
-const RecentLocation = styled.span`
-  font-size: 12px;
-  color: ${({ theme }) => theme.colors.secondary};
-`
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
@@ -332,27 +270,10 @@ function formatLocation(record: VisitRecord): string {
   return record.sigungu ? `${record.sido} ${record.sigungu}` : record.sido
 }
 
-interface RecentRecordCardProps {
-  record: VisitRecord
-  onClick: () => void
-}
-
 const COUNTRY_FLAGS = {
   korea: '🇰🇷',
   japan: '🇯🇵',
 } as const
-
-function RecentRecordCard({ record, onClick }: RecentRecordCardProps) {
-  return (
-    <RecentCard onClick={onClick}>
-      <RecentDate>{formatDate(record.visitedAt)}</RecentDate>
-      <RecentTitle>{record.title}</RecentTitle>
-      <RecentLocation>
-        {COUNTRY_FLAGS[record.country ?? 'korea']} {formatLocation(record)}
-      </RecentLocation>
-    </RecentCard>
-  )
-}
 
 export default function Home() {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false)
@@ -405,12 +326,6 @@ export default function Home() {
       scores[record.sigungu] = Math.max(scores[record.sigungu] ?? 0, score)
     })
     return scores
-  }, [countryRecords])
-
-  const recentRecords = useMemo(() => {
-    return [...countryRecords]
-      .sort((a, b) => new Date(b.visitedAt).getTime() - new Date(a.visitedAt).getTime())
-      .slice(0, 5)
   }, [countryRecords])
 
   // 전체 기록 (날짜순 정렬)
@@ -504,23 +419,6 @@ export default function Home() {
           sigunguMaxScores={sigunguMaxScores}
         />
 
-        {recentRecords.length > 0 && (
-          <RecentSection>
-            <SectionTitle>최근 기록</SectionTitle>
-            <RecentGrid>
-              {recentRecords.map((record) => (
-                <RecentRecordCard
-                  key={record.id}
-                  record={record}
-                  onClick={() => {
-                    useRecordStore.getState().setSelectedRecord(record)
-                    openModal('record')
-                  }}
-                />
-              ))}
-            </RecentGrid>
-          </RecentSection>
-        )}
       </Main>
 
       {isModalOpen && <RecordModal />}
