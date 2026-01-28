@@ -297,39 +297,107 @@ export const JapanRegionMap = memo(function JapanRegionMap({
       const geometry = feature.geometry as Geometry & { coordinates?: unknown[] }
       let featureToRender: Feature<Geometry> = feature as Feature<Geometry>
 
-      // MultiPolygon인 경우 가장 큰 polygon(본토)만 선택
+      // MultiPolygon인 경우: 멀리 떨어진 섬만 제외하고 본토 근처 폴리곤은 모두 포함
       if (geometry.type === 'MultiPolygon' && geometry.coordinates) {
-        let maxPoints = 0
-        let largestPolygon: number[][][] | null = null
+        const polygons = geometry.coordinates as number[][][][]
 
-        for (const polygon of geometry.coordinates as number[][][][]) {
-          const points = polygon[0]?.length ?? 0
+        // 각 폴리곤의 중심 위도/경도 계산
+        const polygonCenters = polygons.map((polygon) => {
+          const coords = polygon[0] ?? []
+          const sumLon = coords.reduce((sum, c) => sum + c[0], 0)
+          const sumLat = coords.reduce((sum, c) => sum + c[1], 0)
+          return {
+            lon: sumLon / coords.length,
+            lat: sumLat / coords.length,
+            polygon,
+          }
+        })
+
+        // 가장 큰 폴리곤을 기준으로 삼음
+        let maxPoints = 0
+        let mainPolygonCenter = { lon: 0, lat: 0 }
+        for (const pc of polygonCenters) {
+          const points = pc.polygon[0]?.length ?? 0
           if (points > maxPoints) {
             maxPoints = points
-            largestPolygon = polygon
+            mainPolygonCenter = { lon: pc.lon, lat: pc.lat }
           }
         }
 
-        if (largestPolygon) {
+        // 본토 중심에서 2도 이내의 폴리곤만 포함 (멀리 떨어진 도서 지역 제외)
+        const nearbyPolygons = polygonCenters
+          .filter((pc) => {
+            const distLon = Math.abs(pc.lon - mainPolygonCenter.lon)
+            const distLat = Math.abs(pc.lat - mainPolygonCenter.lat)
+            return distLon < 2 && distLat < 2
+          })
+          .map((pc) => pc.polygon)
+
+        if (nearbyPolygons.length === 1) {
+          // 하나만 남으면 Polygon으로 변환
           featureToRender = {
             type: 'Feature',
             properties: feature.properties,
             geometry: {
               type: 'Polygon',
-              coordinates: largestPolygon,
+              coordinates: nearbyPolygons[0],
+            },
+          }
+        } else if (nearbyPolygons.length > 1) {
+          // 여러 개면 MultiPolygon 유지
+          featureToRender = {
+            type: 'Feature',
+            properties: feature.properties,
+            geometry: {
+              type: 'MultiPolygon',
+              coordinates: nearbyPolygons,
             },
           }
         }
       }
 
-      let d = generator(featureToRender)
-      if (!d) return null
+      // MultiPolygon인 경우 각 폴리곤을 개별적으로 path 생성 후 합침
+      // (클리핑 사각형 문제를 피하기 위함)
+      let d: string | null = null
 
-      // d3-geo가 추가하는 클리핑 사각형 제거 (첫 번째 Z까지만 사용)
-      const firstZIndex = d.indexOf('Z')
-      if (firstZIndex !== -1 && d.indexOf('M', firstZIndex) !== -1) {
-        d = d.substring(0, firstZIndex + 1)
+      if (featureToRender.geometry.type === 'MultiPolygon') {
+        const multiCoords = featureToRender.geometry.coordinates as number[][][][]
+        const paths: string[] = []
+
+        for (const polygonCoords of multiCoords) {
+          const singlePolygonFeature: Feature<Geometry> = {
+            type: 'Feature',
+            properties: featureToRender.properties,
+            geometry: {
+              type: 'Polygon',
+              coordinates: polygonCoords,
+            },
+          }
+          const singlePath = generator(singlePolygonFeature)
+          if (singlePath) {
+            // 각 개별 폴리곤에 대해 클리핑 사각형 제거
+            const firstZIndex = singlePath.indexOf('Z')
+            if (firstZIndex !== -1 && singlePath.indexOf('M', firstZIndex) !== -1) {
+              paths.push(singlePath.substring(0, firstZIndex + 1))
+            } else {
+              paths.push(singlePath)
+            }
+          }
+        }
+
+        d = paths.length > 0 ? paths.join(' ') : null
+      } else {
+        d = generator(featureToRender)
+        if (d) {
+          // 단일 Polygon에 대해 클리핑 사각형 제거
+          const firstZIndex = d.indexOf('Z')
+          if (firstZIndex !== -1 && d.indexOf('M', firstZIndex) !== -1) {
+            d = d.substring(0, firstZIndex + 1)
+          }
+        }
       }
+
+      if (!d) return null
 
       return {
         code,
