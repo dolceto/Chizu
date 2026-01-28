@@ -1,35 +1,46 @@
 # Chizu (地図)
 
-지역별 방문 기록을 시각화하는 인터랙티브 지도 다이어리
+한국/일본 지도 기반 방문 기록 다이어리
 
 ## 개요
 
-Chizu는 한국 지도를 시/도, 시/군/구 단위로 탐색하며 방문 기록을 남길 수 있는 웹 애플리케이션입니다. 방문 횟수에 따른 히트맵 시각화와 특정 장소 핀 마커 기능을 제공합니다.
+Chizu는 한국과 일본 지도를 행정구역 단위로 탐색하며 방문 기록을 남길 수 있는 웹 애플리케이션입니다. 방문 유형에 따른 히트맵 시각화와 오프라인 저장을 지원합니다.
 
 ## 주요 기능
 
 | 기능 | 설명 |
 |------|------|
-| 한국 지도 | 시/도 17개 경계선 표시 및 클릭 인터랙션 |
-| 시/군/구 상세 | 시/도 클릭 시 하위 행정구역 드릴다운 |
-| 히트맵 | 기록 수에 따른 지역별 색상 구분 |
-| 핀 마커 | 좌표 기반 특정 장소 표시 |
+| 한국 지도 | 시/도 → 시/군/구 드릴다운 |
+| 일본 지도 | 도도부현 → 시구정촌 드릴다운 |
+| 섬 네비게이션 | 도쿄, 오키나와 등 도서 지역 시점 이동 |
+| 히트맵 | 방문 유형 점수에 따른 지역별 색상 |
 | 확대/축소/패닝 | 마우스 휠 및 드래그로 지도 조작 |
-| 반응형 모달 | 지역/핀 클릭 시 상세 정보 표시 |
-| 기록 관리 | 방문 기록 생성/조회/수정/삭제 |
+| 방문 유형 | 거주/여행/경유 등 6가지 유형 및 점수 시스템 |
+| 기록 관리 | 방문 기록 CRUD |
 | 로컬 저장 | IndexedDB 기반 오프라인 데이터 저장 |
+
+## 방문 유형 점수
+
+| 유형 | 점수 | 설명 |
+|------|------|------|
+| 거주 | 5 | 해당 지역에 거주 |
+| 숙박 여행 | 4 | 숙박을 포함한 여행 |
+| 당일치기 | 3 | 당일 방문 |
+| 경유/환승 | 2 | 잠시 경유 |
+| 방문 예정 | 1 | 방문 계획 |
+| 미방문 | 0 | 방문한 적 없음 |
 
 ## 기술 스택
 
 | 분류 | 기술 |
 |------|------|
-| Framework | Next.js (Pages Router) |
+| Framework | Next.js 16 (Pages Router) |
 | Language | TypeScript |
-| Map | react-simple-maps, D3-geo |
-| State | Zustand |
+| Map | react-simple-maps, D3-geo, D3-zoom |
+| State | Zustand (persist) |
 | Local DB | Dexie.js (IndexedDB) |
 | Styling | styled-components |
-| UI Components | Radix UI |
+| UI | Radix UI |
 | Linting | ESLint, Prettier |
 | Git Hooks | Husky, Commitlint |
 | Package Manager | pnpm |
@@ -42,9 +53,6 @@ nvm use
 
 # 의존성 설치
 pnpm install
-
-# 환경변수 설정
-cp .env.example .env.local
 
 # 개발 서버 실행
 pnpm dev
@@ -69,119 +77,82 @@ http://localhost:3000 에서 확인
 src/
 ├── components/
 │   ├── map/
-│   │   ├── korea/              # 한국 지도 컴포넌트
-│   │   │   ├── KoreaMap.tsx    # 전국 시/도 지도
-│   │   │   ├── RegionMap.tsx   # 시/군/구 상세 지도
-│   │   │   ├── MapPath.tsx     # 개별 지역 SVG path
-│   │   │   ├── PinMarker.tsx   # 장소 핀 마커
-│   │   │   ├── MapTooltip.tsx  # 호버 툴팁
-│   │   │   └── index.ts
-│   │   ├── common/             # 공통 지도 컴포넌트
-│   │   │   ├── MapContainer.tsx
-│   │   │   ├── ZoomControls.tsx
-│   │   │   └── MapLegend.tsx
-│   │   └── index.ts
-│   ├── modal/
-│   │   ├── RecordModal.tsx     # 기록 상세 모달
-│   │   ├── RecordForm.tsx      # 기록 입력 폼
-│   │   └── RecordList.tsx      # 기록 목록
-│   └── ui/                     # 공통 UI 컴포넌트
+│   │   ├── KoreaMap.tsx          # 한국 시/도 지도
+│   │   ├── RegionMap.tsx         # 한국 시/군/구 지도
+│   │   ├── JapanMap.tsx          # 일본 도도부현 지도
+│   │   ├── JapanRegionMap.tsx    # 일본 시구정촌 지도
+│   │   ├── MainMap.tsx           # 메인 지도 (국가 전환)
+│   │   ├── MapNavigation.tsx     # 뒤로가기/브레드크럼
+│   │   ├── MapTooltip.tsx        # 호버 툴팁
+│   │   ├── ZoomControls.tsx      # 확대/축소 버튼
+│   │   ├── prefectureConfig.ts   # 도도부현 설정 (섬 포함)
+│   │   └── japaneseToKorean.ts   # 일본 지명 한글 변환
+│   ├── ui/
+│   │   ├── RecordModal.tsx       # 기록 모달
+│   │   ├── RecordForm.tsx        # 기록 입력 폼
+│   │   ├── RecordList.tsx        # 기록 목록
+│   │   ├── SideMenu.tsx          # 사이드 메뉴
+│   │   └── Toast.tsx             # 토스트 알림
+│   └── common/
+│       └── ChizuLogo.tsx         # 로고
 ├── stores/
-│   ├── useRecordStore.ts       # 기록 상태 관리
-│   └── useMapStore.ts          # 지도 상태 관리
+│   ├── useRecordStore.ts         # 기록 상태 관리
+│   └── useMapStore.ts            # 지도 상태 관리 (persist)
 ├── db/
-│   ├── index.ts                # Dexie 설정
-│   └── records.ts              # 기록 CRUD
-├── data/
-│   └── geojson/
-│       └── korea/
-│           ├── sido.json       # 시/도 경계 데이터
-│           └── sigungu/        # 시/군/구 경계 데이터
-│               ├── seoul.json
-│               ├── busan.json
-│               └── ...
+│   ├── index.ts                  # Dexie 설정
+│   └── records.ts                # 기록 CRUD
 ├── types/
-│   ├── record.ts               # 기록 타입 정의
-│   └── map.ts                  # 지도 타입 정의
-└── pages/
-    └── index.tsx               # 메인 페이지
+│   ├── record.ts                 # 기록/방문유형 타입
+│   └── map.ts                    # 지도 타입
+└── data/geojson/
+    ├── korea/                    # 한국 GeoJSON
+    └── japan/                    # 일본 GeoJSON
 ```
-
-## 데이터 구조
-
-### Record (기록)
-
-```typescript
-interface Record {
-  id: string
-
-  // 위치 정보
-  sido: string           // "서울특별시"
-  sigungu: string        // "강남구"
-  address?: string       // 상세 주소
-  coordinates?: {        // 핀 마커용 좌표
-    lat: number
-    lng: number
-  }
-
-  // 기록 내용
-  title: string
-  memo?: string
-  category?: string      // "카페" | "맛집" | "여행" 등
-  photos?: string[]
-
-  // 시간
-  visitedAt: string      // 방문 날짜
-  createdAt: string
-  updatedAt: string
-}
-```
-
-### 히트맵 색상 등급
-
-| 방문 횟수 | 색상 |
-|----------|------|
-| 0회 | 회색 |
-| 1-5회 | 연한 파랑 |
-| 6-20회 | 초록 |
-| 21-50회 | 노랑 |
-| 51-100회 | 주황 |
-| 100회+ | 빨강 |
 
 ## 로드맵
 
-### 1차 MVP
-- [x] 프로젝트 설정
-- [ ] 한국 지도 렌더링 (시/도)
-- [ ] 시/군/구 드릴다운
-- [ ] 확대/축소/패닝
-- [ ] 히트맵 시각화
-- [ ] 핀 마커
-- [ ] 기록 CRUD
-- [ ] 반응형 모달
-- [ ] 로컬 저장 (IndexedDB)
+### 1차 MVP ✅
 
-### 2차
-- [ ] 소셜 로그인
-- [ ] 서버/DB 연동
-- [ ] 사용자별 데이터 분리
-- [ ] 다른 국가 지도 확장
+- [x] 한국 지도 (시/도 → 시/군/구)
+- [x] 일본 지도 (도도부현 → 시구정촌)
+- [x] 섬 네비게이션 (도쿄, 오키나와 등)
+- [x] 확대/축소/패닝
+- [x] 히트맵 시각화
+- [x] 방문 유형 점수 시스템
+- [x] 기록 CRUD
+- [x] 로컬 저장 (IndexedDB)
+- [x] 다크/라이트 테마
+
+### 2차 MVP 🚧
+
+- [ ] 소셜 로그인 (Google, 카카오)
+- [ ] 클라우드 동기화 (Supabase)
+- [ ] 기기 간 데이터 동기화
+- [ ] 오프라인 → 온라인 자동 동기화
+
+> 상세 계획: [docs/MVP2_PLAN.md](./docs/MVP2_PLAN.md)
+
+### 향후 계획
+
+- [ ] 다른 국가 지도 확장 (대만, 중국 등)
+- [ ] 통계 대시보드
+- [ ] 데이터 내보내기/가져오기
 
 ## 커밋 규칙
 
 `type(scope): 설명` 형식 필수
 
 ```bash
-# 예시
-feat(map): 한국 지도 컴포넌트 추가
+feat(map): 일본 도도부현 지도 추가
 fix(modal): 모달 닫힘 버그 수정
-docs(readme): 기능 설명 추가
+perf(map): 시구정촌 렌더링 최적화
 ```
 
 | Type | 설명 |
 |------|------|
 | feat | 새로운 기능 |
 | fix | 버그 수정 |
+| perf | 성능 개선 |
 | docs | 문서 수정 |
 | style | 코드 스타일 변경 |
 | refactor | 리팩토링 |
