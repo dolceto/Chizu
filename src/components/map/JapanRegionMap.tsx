@@ -1,5 +1,5 @@
-import { useRef, useCallback, useMemo, useEffect, useState, memo } from 'react'
-import { geoMercator, geoPath } from 'd3-geo'
+import { useRef, useCallback, useMemo, useEffect, useState, memo, MouseEvent, PointerEvent } from 'react'
+import { geoMercator, geoPath, GeoPath, GeoPermissibleObjects } from 'd3-geo'
 import { zoom as d3Zoom, zoomIdentity, ZoomBehavior } from 'd3-zoom'
 import { select } from 'd3-selection'
 import 'd3-transition' // transition 메서드 확장을 위해 import
@@ -10,6 +10,14 @@ import { MapTooltip } from './MapTooltip'
 import { PREFECTURE_CONFIG, IslandConfig } from './prefectureConfig'
 import { getMunicipalityNameKo } from './japaneseToKorean'
 import type { Feature, FeatureCollection, Geometry } from 'geojson'
+
+// 미리 계산된 path 데이터 타입
+interface ProcessedFeature {
+  code: string
+  name: string
+  nameKo: string
+  path: string
+}
 
 const MUNICIPALITIES_GEO_URL = '/data/geojson/japan/municipalities.json'
 
@@ -44,15 +52,53 @@ const RegionPath = styled.path<{ $isHovered: boolean; $fill: string }>`
   stroke: ${({ $isHovered }) => ($isHovered ? '#374151' : '#6B7280')};
   stroke-width: ${({ $isHovered }) => ($isHovered ? 2 : 1)};
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+  will-change: fill, stroke;
 
   &:hover {
-    fill: ${({ $isHovered, $fill }) => ($isHovered ? '#60A5FA' : $fill)};
+    fill: #60A5FA;
     stroke: #374151;
     stroke-width: 2;
-    filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.3));
   }
 `
+
+// 개별 지역 컴포넌트 (memo로 불필요한 리렌더링 방지)
+interface MunicipalityPathProps {
+  data: ProcessedFeature
+  score: number
+  isHovered: boolean
+  isMobile: boolean
+  onMouseEnter: (name: string) => void
+  onMouseLeave: () => void
+  onMouseMove: (e: MouseEvent, name: string) => void
+  onClick: (name: string, code: string) => void
+  onPointerUp: (e: PointerEvent, name: string, code: string) => void
+}
+
+const MunicipalityPath = memo(function MunicipalityPath({
+  data,
+  score,
+  isHovered,
+  isMobile,
+  onMouseEnter,
+  onMouseLeave,
+  onMouseMove,
+  onClick,
+  onPointerUp,
+}: MunicipalityPathProps) {
+  return (
+    <RegionPath
+      d={data.path}
+      $isHovered={isHovered}
+      $fill={getHeatmapColor(score)}
+      onClick={() => !isMobile && onClick(data.nameKo, data.code)}
+      onMouseEnter={() => onMouseEnter(data.nameKo)}
+      onMouseLeave={onMouseLeave}
+      onMouseMove={(e) => onMouseMove(e, data.nameKo)}
+      onPointerUp={(e) => onPointerUp(e, data.nameKo, data.code)}
+    />
+  )
+})
 
 const IslandNavPanel = styled.div`
   position: absolute;
@@ -234,6 +280,70 @@ export const JapanRegionMap = memo(function JapanRegionMap({
     return geoPath().projection(proj)
   }, [filteredFeatures, dimensions.width, dimensions.height, config])
 
+  // path 데이터 미리 계산 (성능 최적화)
+  const processedFeatures = useMemo(() => {
+    if (!pathGenerator) return []
+
+    const processFeature = (
+      feature: Feature,
+      generator: GeoPath<unknown, GeoPermissibleObjects>
+    ): ProcessedFeature | null => {
+      const properties = feature.properties as MunicipalityProperties
+      const name = getMunicipalityName(properties)
+      const code = getMunicipalityCode(properties)
+
+      if (!name) return null
+
+      const geometry = feature.geometry as Geometry & { coordinates?: unknown[] }
+      let featureToRender: Feature<Geometry> = feature as Feature<Geometry>
+
+      // MultiPolygon인 경우 가장 큰 polygon(본토)만 선택
+      if (geometry.type === 'MultiPolygon' && geometry.coordinates) {
+        let maxPoints = 0
+        let largestPolygon: number[][][] | null = null
+
+        for (const polygon of geometry.coordinates as number[][][][]) {
+          const points = polygon[0]?.length ?? 0
+          if (points > maxPoints) {
+            maxPoints = points
+            largestPolygon = polygon
+          }
+        }
+
+        if (largestPolygon) {
+          featureToRender = {
+            type: 'Feature',
+            properties: feature.properties,
+            geometry: {
+              type: 'Polygon',
+              coordinates: largestPolygon,
+            },
+          }
+        }
+      }
+
+      let d = generator(featureToRender)
+      if (!d) return null
+
+      // d3-geo가 추가하는 클리핑 사각형 제거 (첫 번째 Z까지만 사용)
+      const firstZIndex = d.indexOf('Z')
+      if (firstZIndex !== -1 && d.indexOf('M', firstZIndex) !== -1) {
+        d = d.substring(0, firstZIndex + 1)
+      }
+
+      return {
+        code,
+        name,
+        nameKo: getMunicipalityNameKo(name),
+        path: d,
+      }
+    }
+
+    return filteredFeatures
+      .map((feature) => processFeature(feature as Feature, pathGenerator))
+      .filter((f): f is ProcessedFeature => f !== null)
+  }, [filteredFeatures, pathGenerator])
+
   const handleMouseEnter = useCallback(
     (name: string) => {
       if (isMobile) return
@@ -357,67 +467,20 @@ export const JapanRegionMap = memo(function JapanRegionMap({
     <MapContainer ref={mapRef}>
       <StyledSvg ref={svgRef} viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}>
         <g ref={gRef}>
-        {filteredFeatures.map((feature, index) => {
-          const properties = feature.properties as MunicipalityProperties
-          const name = getMunicipalityName(properties)
-          const nameKo = getMunicipalityNameKo(name)
-          const code = getMunicipalityCode(properties)
-          const score = maxScores[nameKo] ?? maxScores[name] ?? 0
-          const isHovered = hoveredRegion === nameKo
-
-          if (!name || !pathGenerator) return null
-
-          const geometry = feature.geometry as Geometry & { coordinates?: unknown[] }
-          let featureToRender: Feature<Geometry> = feature as Feature<Geometry>
-
-          // MultiPolygon인 경우 가장 큰 polygon(본토)만 선택
-          if (geometry.type === 'MultiPolygon' && geometry.coordinates) {
-            let maxPoints = 0
-            let largestPolygon: number[][][] | null = null
-
-            for (const polygon of geometry.coordinates as number[][][][]) {
-              const points = polygon[0]?.length ?? 0
-              if (points > maxPoints) {
-                maxPoints = points
-                largestPolygon = polygon
-              }
-            }
-
-            if (largestPolygon) {
-              featureToRender = {
-                type: 'Feature',
-                properties: feature.properties,
-                geometry: {
-                  type: 'Polygon',
-                  coordinates: largestPolygon,
-                },
-              }
-            }
-          }
-
-          let d = pathGenerator(featureToRender)
-          if (!d) return null
-
-          // d3-geo가 추가하는 클리핑 사각형 제거 (첫 번째 Z까지만 사용)
-          const firstZIndex = d.indexOf('Z')
-          if (firstZIndex !== -1 && d.indexOf('M', firstZIndex) !== -1) {
-            d = d.substring(0, firstZIndex + 1)
-          }
-
-          return (
-            <RegionPath
-              key={`${code}-${index}`}
-              d={d}
-              $isHovered={isHovered}
-              $fill={getHeatmapColor(score)}
-              onClick={() => !isMobile && handleClick(nameKo, code)}
-              onMouseEnter={() => handleMouseEnter(nameKo)}
+          {processedFeatures.map((data) => (
+            <MunicipalityPath
+              key={data.code}
+              data={data}
+              score={maxScores[data.nameKo] ?? maxScores[data.name] ?? 0}
+              isHovered={hoveredRegion === data.nameKo}
+              isMobile={isMobile}
+              onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
-              onMouseMove={(e) => handleMouseMove(e, nameKo)}
-              onPointerUp={(e) => handleMobileTap(e, nameKo, code)}
+              onMouseMove={handleMouseMove}
+              onClick={handleClick}
+              onPointerUp={handleMobileTap}
             />
-          )
-        })}
+          ))}
         </g>
       </StyledSvg>
 
