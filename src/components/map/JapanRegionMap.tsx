@@ -155,66 +155,22 @@ export const JapanRegionMap = memo(function JapanRegionMap({
   const pathGenerator = useMemo(() => {
     if (filteredFeatures.length === 0) return null
 
-    // 모든 feature의 좌표 범위 계산
-    let minLon = Infinity,
-      maxLon = -Infinity,
-      minLat = Infinity,
-      maxLat = -Infinity
+    // PREFECTURE_CONFIG의 center와 scale 사용 (본토 중심, 멀리 떨어진 섬 문제 해결)
+    const [centerLon, centerLat] = config.center
+    const configScale = config.scale
 
-    const extractCoords = (arr: unknown[]): void => {
-      if (
-        Array.isArray(arr) &&
-        arr.length >= 2 &&
-        typeof arr[0] === 'number' &&
-        typeof arr[1] === 'number'
-      ) {
-        const [lon, lat] = arr as [number, number]
-        if (lon < minLon) minLon = lon
-        if (lon > maxLon) maxLon = lon
-        if (lat < minLat) minLat = lat
-        if (lat > maxLat) maxLat = lat
-      } else if (Array.isArray(arr)) {
-        arr.forEach((item) => extractCoords(item as unknown[]))
-      }
-    }
-
-    for (const feature of filteredFeatures) {
-      const geom = feature.geometry as { coordinates?: unknown }
-      if (geom.coordinates) {
-        extractCoords(geom.coordinates as unknown[])
-      }
-    }
-
-    if (minLon === Infinity) return null
-
-    // 중심점과 크기 계산
-    const centerLon = (minLon + maxLon) / 2
-    const centerLat = (minLat + maxLat) / 2
-    const lonRange = maxLon - minLon
-    const latRange = maxLat - minLat
-
-    // 화면에 맞는 scale 계산 (여백 포함)
-    const padding = 80
-    const availableWidth = dimensions.width - padding * 2
-    const availableHeight = dimensions.height - padding * 2
-
-    // Mercator projection에서 위도에 따른 왜곡 보정
-    const latRad = (centerLat * Math.PI) / 180
-    const mercatorScale = 1 / Math.cos(latRad)
-
-    // 경도 1도당 픽셀 수와 위도 1도당 픽셀 수 계산
-    const scaleX = availableWidth / lonRange
-    const scaleY = availableHeight / (latRange * mercatorScale)
-    const scale = Math.min(scaleX, scaleY) * 0.9 // 약간의 여유
+    // 화면 크기에 맞춰 scale 조정
+    const baseSize = Math.min(dimensions.width, dimensions.height)
+    const scaleFactor = baseSize / 600 // 기준 크기 600px
 
     // Mercator projection 생성
     const proj = geoMercator()
       .center([centerLon, centerLat])
-      .scale(scale * 60) // Mercator의 기본 scale 보정
+      .scale(configScale * scaleFactor)
       .translate([dimensions.width / 2, dimensions.height / 2])
 
     return geoPath().projection(proj)
-  }, [filteredFeatures, dimensions.width, dimensions.height])
+  }, [filteredFeatures, dimensions.width, dimensions.height, config])
 
   const handleMouseEnter = useCallback(
     (name: string) => {

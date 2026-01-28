@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Record, Country } from '@/types'
+import { VISIT_TYPE_SCORES } from '@/types'
 
 interface RecordState {
   records: Record[]
@@ -22,6 +23,8 @@ interface RecordState {
   getRecordCountBySido: (sido: string, country?: Country) => number
   getRecordCountBySigungu: (sido: string, sigungu: string, country?: Country) => number
   getRecordsByCountry: (country: Country) => Record[]
+  getMaxScoreBySido: (sido: string, country?: Country) => number
+  getMaxScoreBySigungu: (sido: string, sigungu: string, country?: Country) => number
 }
 
 export const useRecordStore = create<RecordState>((set, get) => ({
@@ -94,5 +97,24 @@ export const useRecordStore = create<RecordState>((set, get) => ({
 
   getRecordsByCountry: (country) => {
     return get().records.filter((r) => r.country === country)
+  },
+
+  getMaxScoreBySido: (sido, country) => {
+    const records = get().records.filter(
+      (r) => r.sido === sido && (country ? r.country === country : true)
+    )
+    if (records.length === 0) return 0
+    return Math.max(...records.map((r) => VISIT_TYPE_SCORES[r.visitType] ?? 0))
+  },
+
+  getMaxScoreBySigungu: (sido, sigungu, country) => {
+    const records = get().records.filter(
+      (r) =>
+        r.sido === sido &&
+        r.sigungu === sigungu &&
+        (country ? r.country === country : true)
+    )
+    if (records.length === 0) return 0
+    return Math.max(...records.map((r) => VISIT_TYPE_SCORES[r.visitType] ?? 0))
   },
 }))

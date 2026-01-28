@@ -10,7 +10,7 @@ const SIGUNGU_GEO_URL = '/data/geojson/korea/sigungu.json'
 
 interface RegionMapProps {
   sidoName: string
-  recordCounts?: Record<string, number>
+  maxScores?: Record<string, number>
   onSigunguClick?: (name: string, code: string) => void
 }
 
@@ -36,7 +36,7 @@ const MapContainer = styled.div`
   }
 `
 
-export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, onSigunguClick }: RegionMapProps) {
+export const RegionMap = memo(function RegionMap({ sidoName, maxScores = {}, onSigunguClick }: RegionMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -177,7 +177,7 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
                 .map((geo) => {
                   const name = geo.properties.name as string
                   const code = geo.properties.code as string
-                  const count = recordCounts[name] ?? 0
+                  const score = maxScores[name] ?? 0
                   const isHovered = hoveredRegion === name
 
                   return (
@@ -191,7 +191,7 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
                       onPointerUp={(e) => handleMobileTap(e as unknown as React.PointerEvent, name, code)}
                       style={{
                         default: {
-                          fill: isHovered ? '#60A5FA' : getHeatmapColor(count),
+                          fill: isHovered ? '#60A5FA' : getHeatmapColor(score),
                           stroke: isHovered ? '#6B7280' : '#9CA3AF',
                           strokeWidth: isHovered ? 1 : 0.5,
                           outline: 'none',
@@ -199,7 +199,7 @@ export const RegionMap = memo(function RegionMap({ sidoName, recordCounts = {}, 
                           cursor: 'pointer',
                         },
                         hover: {
-                          fill: isHovered ? '#60A5FA' : getHeatmapColor(count),
+                          fill: isHovered ? '#60A5FA' : getHeatmapColor(score),
                           stroke: '#6B7280',
                           strokeWidth: 1,
                           outline: 'none',

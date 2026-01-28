@@ -12,7 +12,7 @@ const JAPAN_CENTER: [number, number] = [138.0, 38.0]
 const JAPAN_SCALE = 10000
 
 interface JapanMapProps {
-  recordCounts?: Record<string, number>
+  maxScores?: Record<string, number>
   onPrefectureClick?: (name: string, code: string) => void
 }
 
@@ -39,7 +39,7 @@ const MapContainer = styled.div`
 `
 
 export const JapanMap = memo(function JapanMap({
-  recordCounts = {},
+  maxScores = {},
   onPrefectureClick,
 }: JapanMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
@@ -171,7 +171,7 @@ export const JapanMap = memo(function JapanMap({
               geographies.map((geo) => {
                 const name = geo.properties.name as string
                 const code = geo.properties.code as string
-                const count = recordCounts[name] ?? 0
+                const score = maxScores[name] ?? 0
                 const isHovered = hoveredRegion === getPrefectureNameKo(name)
 
                 return (
@@ -187,7 +187,7 @@ export const JapanMap = memo(function JapanMap({
                     }
                     style={{
                       default: {
-                        fill: isHovered ? '#60A5FA' : getHeatmapColor(count),
+                        fill: isHovered ? '#60A5FA' : getHeatmapColor(score),
                         stroke: isHovered ? '#6B7280' : '#9CA3AF',
                         strokeWidth: isHovered ? 1 : 0.5,
                         outline: 'none',
@@ -195,7 +195,7 @@ export const JapanMap = memo(function JapanMap({
                         cursor: 'pointer',
                       },
                       hover: {
-                        fill: isHovered ? '#60A5FA' : getHeatmapColor(count),
+                        fill: isHovered ? '#60A5FA' : getHeatmapColor(score),
                         stroke: '#6B7280',
                         strokeWidth: 1,
                         outline: 'none',

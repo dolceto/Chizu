@@ -528,3 +528,39 @@ export function getMunicipalityNameKo(name: string): string {
 export function convertJapaneseToKorean(text: string): string {
   return convertKanaToKorean(text)
 }
+
+// 한글 → 일본어 역변환 매핑 (관용표기)
+const MUNICIPALITY_NAMES_JA: Record<string, string> = Object.fromEntries(
+  Object.entries(MUNICIPALITY_NAMES_KO).map(([ja, ko]) => [ko, ja])
+)
+
+// 한글 → 일본어 역변환 매핑 (히라가나 기반 변환)
+const MUNICIPALITY_KANA_REVERSE: Record<string, string> = {}
+
+// MUNICIPALITY_KANA를 기반으로 역변환 매핑 생성
+for (const [ja, kana] of Object.entries(MUNICIPALITY_KANA)) {
+  const ko = convertKanaToKorean(kana)
+  if (ko && !MUNICIPALITY_KANA_REVERSE[ko]) {
+    MUNICIPALITY_KANA_REVERSE[ko] = ja
+  }
+}
+
+/**
+ * 시구정촌 한글명 → 일본어명 역변환
+ */
+export function getMunicipalityNameJa(koreanName: string): string {
+  if (!koreanName) return ''
+
+  // 1. 관용표기 역변환 확인
+  if (MUNICIPALITY_NAMES_JA[koreanName]) {
+    return MUNICIPALITY_NAMES_JA[koreanName]
+  }
+
+  // 2. 히라가나 기반 역변환 확인
+  if (MUNICIPALITY_KANA_REVERSE[koreanName]) {
+    return MUNICIPALITY_KANA_REVERSE[koreanName]
+  }
+
+  // 3. 매핑이 없으면 그대로 반환
+  return koreanName
+}

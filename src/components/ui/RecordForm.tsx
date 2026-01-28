@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect } from 'react'
 import styled from 'styled-components'
 import { useRecordStore, useMapStore } from '@/stores'
 import { createRecord, updateRecord, getRecordById } from '@/db/records'
-import type { Category, RecordInput, Country } from '@/types'
+import type { Category, RecordInput, Country, VisitType } from '@/types'
+import { VISIT_TYPE_LABELS, VISIT_TYPE_SCORES } from '@/types'
 
 const CATEGORIES: { value: Category; label: string }[] = [
   { value: 'cafe', label: '카페' },
@@ -161,6 +162,7 @@ interface FormState {
   title: string
   memo: string
   category: Category
+  visitType: VisitType
   visitedAt: string
   address: string
 }
@@ -169,6 +171,7 @@ const initialFormState: FormState = {
   title: '',
   memo: '',
   category: 'etc',
+  visitType: 'visit',
   visitedAt: new Date().toISOString().split('T')[0],
   address: '',
 }
@@ -198,6 +201,7 @@ export function RecordForm({ sido, sigungu, recordId, onSuccess, onCancel }: Rec
               title: record.title,
               memo: record.memo ?? '',
               category: record.category ?? 'etc',
+              visitType: record.visitType ?? 'visit',
               visitedAt: record.visitedAt.split('T')[0],
               address: record.address ?? '',
             })
@@ -254,6 +258,7 @@ export function RecordForm({ sido, sigungu, recordId, onSuccess, onCancel }: Rec
           title: formState.title.trim(),
           memo: formState.memo.trim() || undefined,
           category: formState.category,
+          visitType: formState.visitType,
           visitedAt: formState.visitedAt,
           address: formState.address.trim() || undefined,
         }
@@ -334,6 +339,17 @@ export function RecordForm({ sido, sigungu, recordId, onSuccess, onCancel }: Rec
           {CATEGORIES.map((cat) => (
             <option key={cat.value} value={cat.value}>
               {cat.label}
+            </option>
+          ))}
+        </Select>
+      </FormGroup>
+
+      <FormGroup>
+        <Label htmlFor="visitType">방문 유형</Label>
+        <Select id="visitType" name="visitType" value={formState.visitType} onChange={handleChange}>
+          {(Object.keys(VISIT_TYPE_LABELS) as VisitType[]).map((type) => (
+            <option key={type} value={type}>
+              {VISIT_TYPE_LABELS[type]} ({VISIT_TYPE_SCORES[type]}점)
             </option>
           ))}
         </Select>

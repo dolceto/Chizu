@@ -70,8 +70,8 @@ export const PREFECTURE_CONFIG: Record<string, PrefectureConfig> = {
   },
   東京都: {
     codePrefix: '13',
-    center: [139.5, 35.7],
-    scale: 95000, // 본토 중심
+    center: [139.5, 35.68],
+    scale: 65000, // 본토 중심
   },
   神奈川県: {
     codePrefix: '14',

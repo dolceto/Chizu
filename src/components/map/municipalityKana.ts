@@ -1,5 +1,6 @@
 // 일본 시구정촌명 → 히라가나 읽기 매핑
 // 출처: https://github.com/nojimage/local-gov-code-jp
+// 벤치마킹/데이터 비교: https://geojson.io/
 export const MUNICIPALITY_KANA: Record<string, string> = {
   'あきる野市': 'あきるのし',
   'あさぎり町': 'あさぎりちょう',

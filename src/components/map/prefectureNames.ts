@@ -67,3 +67,12 @@ export const PREFECTURE_NAMES_KO: Record<string, string> = {
 export function getPrefectureNameKo(japaneseName: string): string {
   return PREFECTURE_NAMES_KO[japaneseName] ?? japaneseName
 }
+
+// 한글 → 일본어 역변환 매핑
+const PREFECTURE_NAMES_JA: Record<string, string> = Object.fromEntries(
+  Object.entries(PREFECTURE_NAMES_KO).map(([ja, ko]) => [ko, ja])
+)
+
+export function getPrefectureNameJa(koreanName: string): string {
+  return PREFECTURE_NAMES_JA[koreanName] ?? koreanName
+}

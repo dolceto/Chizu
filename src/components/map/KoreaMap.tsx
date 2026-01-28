@@ -11,7 +11,7 @@ const KOREA_CENTER: [number, number] = [127.7669, 35.9078]
 const KOREA_SCALE = 20000
 
 interface KoreaMapProps {
-  recordCounts?: Record<string, number>
+  maxScores?: Record<string, number>
   onSidoClick?: (name: string, code: string) => void
 }
 
@@ -37,7 +37,7 @@ const MapContainer = styled.div`
   }
 `
 
-export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick }: KoreaMapProps) {
+export const KoreaMap = memo(function KoreaMap({ maxScores = {}, onSidoClick }: KoreaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -166,7 +166,7 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
               geographies.map((geo) => {
                 const name = geo.properties.name as string
                 const code = geo.properties.code as string
-                const count = recordCounts[name] ?? 0
+                const score = maxScores[name] ?? 0
                 const isHovered = hoveredRegion === name
 
                 return (
@@ -180,7 +180,7 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
                     onPointerUp={(e) => handleMobileTap(e as unknown as React.PointerEvent, name, code)}
                     style={{
                       default: {
-                        fill: isHovered ? '#60A5FA' : getHeatmapColor(count),
+                        fill: isHovered ? '#60A5FA' : getHeatmapColor(score),
                         stroke: isHovered ? '#6B7280' : '#9CA3AF',
                         strokeWidth: isHovered ? 1 : 0.5,
                         outline: 'none',
@@ -188,7 +188,7 @@ export const KoreaMap = memo(function KoreaMap({ recordCounts = {}, onSidoClick 
                         cursor: 'pointer',
                       },
                       hover: {
-                        fill: isHovered ? '#60A5FA' : getHeatmapColor(count),
+                        fill: isHovered ? '#60A5FA' : getHeatmapColor(score),
                         stroke: '#6B7280',
                         strokeWidth: 1,
                         outline: 'none',

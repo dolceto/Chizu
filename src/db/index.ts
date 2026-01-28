@@ -24,4 +24,19 @@ db.version(2)
       })
   })
 
+db.version(3)
+  .stores({
+    records: 'id, country, sido, sigungu, category, visitType, visitedAt, createdAt',
+  })
+  .upgrade((tx) => {
+    return tx
+      .table('records')
+      .toCollection()
+      .modify((record) => {
+        if (!record.visitType) {
+          record.visitType = 'visit'
+        }
+      })
+  })
+
 export { db }

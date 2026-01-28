@@ -137,12 +137,15 @@ const AddButton = styled.button`
 
 function getModalTitle(
   modalType: 'region' | 'record' | 'form' | null,
+  selectedSido: string | null,
   selectedSigungu: string | null,
   isEditing: boolean
 ): string {
   switch (modalType) {
     case 'region':
-      return selectedSigungu ?? '지역 정보'
+      if (selectedSigungu) return selectedSigungu
+      if (selectedSido) return selectedSido
+      return '전체 기록'
     case 'form':
       return isEditing ? '기록 수정' : '새 기록 추가'
     case 'record':
@@ -212,7 +215,7 @@ export function RecordModal() {
               country={selectedCountry}
               onEditRecord={handleEditRecord}
             />
-            <AddButton onClick={handleAddClick}>+ 기록 추가</AddButton>
+            {currentSigungu && <AddButton onClick={handleAddClick}>+ 기록 추가</AddButton>}
           </>
         )
       case 'form':
@@ -246,7 +249,7 @@ export function RecordModal() {
         <ContentWrapper>
           <Content>
             <Header>
-              <Title>{getModalTitle(modalType, selectedSigungu, isEditing)}</Title>
+              <Title>{getModalTitle(modalType, selectedSido ?? null, selectedSigungu ?? null, isEditing)}</Title>
               <CloseButton aria-label="닫기">
                 <svg
                   width="16"

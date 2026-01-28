@@ -52,15 +52,15 @@ const LegendWrapper = styled.div`
 `
 
 interface MainMapProps {
-  sidoRecordCounts?: Record<string, number>
-  sigunguRecordCounts?: Record<string, number>
+  sidoMaxScores?: Record<string, number>
+  sigunguMaxScores?: Record<string, number>
   onSidoClick?: (name: string, code: string) => void
   onSigunguClick?: (name: string, code: string) => void
 }
 
 export function MainMap({
-  sidoRecordCounts = {},
-  sigunguRecordCounts = {},
+  sidoMaxScores = {},
+  sigunguMaxScores = {},
   onSidoClick,
   onSigunguClick,
 }: MainMapProps) {
@@ -72,14 +72,14 @@ export function MainMap({
     if (selectedCountry === 'japan') {
       // 일본
       if (isCountryLevel) {
-        return <JapanMap recordCounts={sidoRecordCounts} onPrefectureClick={onSidoClick} />
+        return <JapanMap maxScores={sidoMaxScores} onPrefectureClick={onSidoClick} />
       }
       // 시구정촌 레벨
       return (
         selectedSido && (
           <JapanRegionMap
             prefectureName={selectedSido}
-            recordCounts={sigunguRecordCounts}
+            maxScores={sigunguMaxScores}
             onMunicipalityClick={onSigunguClick}
           />
         )
@@ -88,14 +88,14 @@ export function MainMap({
 
     // 한국
     if (isCountryLevel) {
-      return <KoreaMap recordCounts={sidoRecordCounts} onSidoClick={onSidoClick} />
+      return <KoreaMap maxScores={sidoMaxScores} onSidoClick={onSidoClick} />
     }
 
     return (
       selectedSido && (
         <RegionMap
           sidoName={selectedSido}
-          recordCounts={sigunguRecordCounts}
+          maxScores={sigunguMaxScores}
           onSigunguClick={onSigunguClick}
         />
       )

@@ -3,23 +3,8 @@ import styled from 'styled-components'
 import { useRecordStore, useToastStore } from '@/stores'
 import { deleteRecord } from '@/db/records'
 import { ConfirmModal } from './ConfirmModal'
-import type { Category, Country, Record as VisitRecord } from '@/types'
-
-const CATEGORY_LABELS: { [key in Category]: string } = {
-  cafe: '카페',
-  restaurant: '음식점',
-  travel: '여행',
-  culture: '문화',
-  etc: '기타',
-}
-
-const CATEGORY_COLORS: { [key in Category]: string } = {
-  cafe: '#8B4513',
-  restaurant: '#DC2626',
-  travel: '#2563EB',
-  culture: '#7C3AED',
-  etc: '#6B7280',
-}
+import type { Country, Record as VisitRecord } from '@/types'
+import { VISIT_TYPE_LABELS, VISIT_TYPE_SCORES, VISIT_TYPE_COLORS } from '@/types'
 
 interface RecordListProps {
   sido: string
@@ -82,16 +67,21 @@ const CardTitle = styled.h3`
   word-break: break-word;
 `
 
-const CategoryBadge = styled.span<{ $color: string }>`
+const VisitTypeBadge = styled.span<{ $color: string }>`
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  gap: 4px;
+  padding: 4px 10px;
   background-color: ${({ $color }) => $color}20;
   color: ${({ $color }) => $color};
   border-radius: 12px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
+`
+
+const ScoreBadge = styled.span`
+  font-weight: 700;
 `
 
 const CardMeta = styled.div`
@@ -170,13 +160,14 @@ function formatDate(dateString: string): string {
 }
 
 export function RecordList({ sido, sigungu, country, onEditRecord }: RecordListProps) {
-  const { getRecordsBySigungu, getRecordsBySido, deleteRecord: deleteFromStore } = useRecordStore()
+  const { getRecordsBySigungu, getRecordsBySido, getRecordsByCountry, deleteRecord: deleteFromStore } = useRecordStore()
   const addToast = useToastStore((state) => state.addToast)
   const [deleteTarget, setDeleteTarget] = useState<VisitRecord | null>(null)
 
-  // 일본은 시군구가 없으므로 도도부현으로 조회
-  const records =
-    country === 'japan' && !sigungu
+  // sido가 없으면 전체 기록 표시
+  const records = !sido
+    ? (country ? getRecordsByCountry(country) : [])
+    : country === 'japan' && !sigungu
       ? getRecordsBySido(sido, country)
       : getRecordsBySigungu(sido, sigungu, country)
 
@@ -226,10 +217,11 @@ export function RecordList({ sido, sigungu, country, onEditRecord }: RecordListP
         <RecordCard key={record.id}>
           <CardHeader>
             <CardTitle>{record.title}</CardTitle>
-            {record.category && (
-              <CategoryBadge $color={CATEGORY_COLORS[record.category]}>
-                {CATEGORY_LABELS[record.category]}
-              </CategoryBadge>
+            {record.visitType && (
+              <VisitTypeBadge $color={VISIT_TYPE_COLORS[record.visitType]}>
+                {VISIT_TYPE_LABELS[record.visitType]}
+                <ScoreBadge>{VISIT_TYPE_SCORES[record.visitType]}점</ScoreBadge>
+              </VisitTypeBadge>
             )}
           </CardHeader>
 

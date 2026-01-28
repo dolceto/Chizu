@@ -1,7 +1,6 @@
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import styled from 'styled-components'
 import { useMapStore } from '@/stores'
-import type { Country } from '@/types'
 import { getPrefectureNameKo } from './prefectureNames'
 
 const NavContainer = styled.div`
@@ -16,32 +15,6 @@ const NavContainer = styled.div`
   background: ${({ theme }) => theme.colors?.background ?? '#ffffff'};
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-`
-
-const CountrySelect = styled.select`
-  padding: 6px 28px 6px 10px;
-  font-size: 14px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors?.text ?? '#374151'};
-  background-color: ${({ theme }) => theme.colors?.surface ?? '#F3F4F6'};
-  border: 1px solid ${({ theme }) => theme.colors?.border ?? '#E5E7EB'};
-  border-radius: 6px;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors?.primary ?? '#3B82F6'};
-    box-shadow: 0 0 0 2px ${({ theme }) => (theme.colors?.primary ? theme.colors.primary + '20' : 'rgba(59, 130, 246, 0.2)')};
-  }
 `
 
 const BackButton = styled.button`
@@ -82,6 +55,9 @@ const Breadcrumb = styled.div`
 `
 
 const BreadcrumbItem = styled.span<{ $isActive?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: ${({ $isActive, theme }) =>
     $isActive ? theme.colors?.text ?? '#374151' : theme.colors?.secondary ?? '#6B7280'};
   font-weight: ${({ $isActive }) => ($isActive ? 600 : 400)};
@@ -91,17 +67,22 @@ const Separator = styled.span`
   color: ${({ theme }) => theme.colors?.secondary ?? '#9CA3AF'};
 `
 
+const FlagEmoji = styled.span`
+  font-size: 16px;
+  line-height: 1;
+`
+
 interface MapNavigationProps {
   showBackButton?: boolean
 }
 
-const COUNTRY_NAMES = {
-  korea: '대한민국',
-  japan: '일본',
+const COUNTRY_INFO = {
+  korea: { name: '대한민국', flag: '🇰🇷' },
+  japan: { name: '일본', flag: '🇯🇵' },
 } as const
 
 export function MapNavigation({ showBackButton = true }: MapNavigationProps) {
-  const { selectedCountry, currentLevel, selectedSido, drillUp, setCountry } = useMapStore()
+  const { selectedCountry, currentLevel, selectedSido, drillUp } = useMapStore()
 
   const isCountryLevel = currentLevel === 'country'
 
@@ -117,12 +98,7 @@ export function MapNavigation({ showBackButton = true }: MapNavigationProps) {
     return selectedSido
   }, [selectedSido, selectedCountry])
 
-  const handleCountryChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setCountry(e.target.value as Country)
-    },
-    [setCountry]
-  )
+  const countryInfo = COUNTRY_INFO[selectedCountry]
 
   return (
     <NavContainer>
@@ -135,17 +111,18 @@ export function MapNavigation({ showBackButton = true }: MapNavigationProps) {
         </BackButton>
       )}
 
-      <CountrySelect value={selectedCountry} onChange={handleCountryChange}>
-        <option value="korea">{COUNTRY_NAMES.korea}</option>
-        <option value="japan">{COUNTRY_NAMES.japan}</option>
-      </CountrySelect>
-
-      {displaySido && (
-        <Breadcrumb>
-          <Separator>/</Separator>
-          <BreadcrumbItem $isActive={!isCountryLevel}>{displaySido}</BreadcrumbItem>
-        </Breadcrumb>
-      )}
+      <Breadcrumb>
+        <BreadcrumbItem $isActive={isCountryLevel}>
+          <FlagEmoji>{countryInfo.flag}</FlagEmoji>
+          {countryInfo.name}
+        </BreadcrumbItem>
+        {displaySido && (
+          <>
+            <Separator>/</Separator>
+            <BreadcrumbItem $isActive={!isCountryLevel}>{displaySido}</BreadcrumbItem>
+          </>
+        )}
+      </Breadcrumb>
     </NavContainer>
   )
 }
