@@ -36,3 +36,4 @@ pnpm-debug.log*
 # Testing
 coverage
 .vercel
+next-env.d.ts

@@ -99,6 +99,18 @@ interface MapState {
 }
 ```
 
+## 지도 렌더링 패턴
+
+### MultiPolygon 처리
+MultiPolygon 타입의 시구정촌(예: 히로시마 아키구)은 각 폴리곤을 개별적으로 처리하여 path를 생성하고 합치는 방식을 사용한다.
+
+1. 본토 중심에서 2도 이내의 폴리곤만 포함 (멀리 떨어진 도서 지역 제외)
+2. 각 폴리곤을 개별적으로 d3-geo path 생성
+3. 각 폴리곤에 대해 클리핑 사각형 제거 로직 적용
+4. 모든 path를 공백으로 연결하여 하나의 d 속성으로 합침
+
+> 참고: `src/components/map/JapanRegionMap.tsx`의 `processedFeatures` useMemo
+
 ## 히트맵 색상
 
 | 방문 횟수 | 색상 |
