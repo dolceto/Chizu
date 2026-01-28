@@ -280,7 +280,7 @@ export default function Home() {
   const [isRecordsDropdownOpen, setIsRecordsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { isModalOpen, openModal, selectedCountry, setSelectedSido, setSelectedSigungu } = useMapStore()
-  const { setRecords, getRecordsByCountry, setSelectedRecord } = useRecordStore()
+  const { records, setRecords, setSelectedRecord } = useRecordStore()
 
   // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
@@ -307,8 +307,8 @@ export default function Home() {
 
   // 현재 국가의 레코드만 필터링
   const countryRecords = useMemo(() => {
-    return getRecordsByCountry(selectedCountry)
-  }, [getRecordsByCountry, selectedCountry])
+    return records.filter((r) => r.country === selectedCountry)
+  }, [records, selectedCountry])
 
   const sidoMaxScores = useMemo(() => {
     const scores: Record<string, number> = {}
