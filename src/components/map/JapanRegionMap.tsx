@@ -14,7 +14,7 @@ const MUNICIPALITIES_GEO_URL = '/data/geojson/japan/municipalities.json'
 
 interface JapanRegionMapProps {
   prefectureName: string
-  recordCounts?: Record<string, number>
+  maxScores?: Record<string, number>
   onMunicipalityClick?: (name: string, code: string) => void
 }
 
@@ -71,7 +71,7 @@ function getMunicipalityCode(properties: MunicipalityProperties): string {
 
 export const JapanRegionMap = memo(function JapanRegionMap({
   prefectureName,
-  recordCounts = {},
+  maxScores = {},
   onMunicipalityClick,
 }: JapanRegionMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
@@ -286,12 +286,40 @@ export const JapanRegionMap = memo(function JapanRegionMap({
           const name = getMunicipalityName(properties)
           const nameKo = getMunicipalityNameKo(name)
           const code = getMunicipalityCode(properties)
-          const count = recordCounts[nameKo] ?? recordCounts[name] ?? 0
+          const score = maxScores[nameKo] ?? maxScores[name] ?? 0
           const isHovered = hoveredRegion === nameKo
 
           if (!name || !pathGenerator) return null
 
-          let d = pathGenerator(feature as Feature<Geometry>)
+          const geometry = feature.geometry as Geometry & { coordinates?: unknown[] }
+          let featureToRender: Feature<Geometry> = feature as Feature<Geometry>
+
+          // MultiPolygon인 경우 가장 큰 polygon(본토)만 선택
+          if (geometry.type === 'MultiPolygon' && geometry.coordinates) {
+            let maxPoints = 0
+            let largestPolygon: number[][][] | null = null
+
+            for (const polygon of geometry.coordinates as number[][][][]) {
+              const points = polygon[0]?.length ?? 0
+              if (points > maxPoints) {
+                maxPoints = points
+                largestPolygon = polygon
+              }
+            }
+
+            if (largestPolygon) {
+              featureToRender = {
+                type: 'Feature',
+                properties: feature.properties,
+                geometry: {
+                  type: 'Polygon',
+                  coordinates: largestPolygon,
+                },
+              }
+            }
+          }
+
+          let d = pathGenerator(featureToRender)
           if (!d) return null
 
           // d3-geo가 추가하는 클리핑 사각형 제거 (첫 번째 Z까지만 사용)
@@ -305,7 +333,7 @@ export const JapanRegionMap = memo(function JapanRegionMap({
               key={`${code}-${index}`}
               d={d}
               $isHovered={isHovered}
-              $fill={getHeatmapColor(count)}
+              $fill={getHeatmapColor(score)}
               onClick={() => !isMobile && handleClick(nameKo, code)}
               onMouseEnter={() => handleMouseEnter(nameKo)}
               onMouseLeave={handleMouseLeave}
